@@ -1,0 +1,4 @@
+rm -vf CMakeCache.txt
+
+cmake .. -DCMAKE_VERBOSE_MAKEFILE=on -DCMAKE_INSTALL_PREFIX:PATH=/usr/
+

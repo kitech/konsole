@@ -1,0 +1,42 @@
+Install the project...
+/usr/bin/cmake -P cmake_install.cmake
+-- Install configuration: "RelWithDebInfo"
+-- Installing: /tmp/abc/lib/libkdeinit4_konsole.so
+-- Set runtime path of "/tmp/abc/lib/libkdeinit4_konsole.so" to "/tmp/abc/lib"
+-- Installing: /tmp/abc/bin/konsole
+-- Set runtime path of "/tmp/abc/bin/konsole" to "/tmp/abc/lib"
+-- Installing: /tmp/abc/lib/libkonsoleprivate.so
+-- Set runtime path of "/tmp/abc/lib/libkonsoleprivate.so" to "/tmp/abc/lib"
+-- Installing: /tmp/abc/lib/kde4/libkonsolepart.so
+-- Set runtime path of "/tmp/abc/lib/kde4/libkonsolepart.so" to "/tmp/abc/lib"
+-- Installing: /tmp/abc/bin/konsoleprofile
+-- Installing: /tmp/abc/share/apps/konsole/BlackOnLightYellow.colorscheme
+-- Installing: /tmp/abc/share/apps/konsole/BlackOnRandomLight.colorscheme
+-- Installing: /tmp/abc/share/apps/konsole/BlackOnWhite.colorscheme
+-- Installing: /tmp/abc/share/apps/konsole/BlueOnBlack.colorscheme
+-- Installing: /tmp/abc/share/apps/konsole/GreenOnBlack.colorscheme
+-- Installing: /tmp/abc/share/apps/konsole/WhiteOnBlack.colorscheme
+-- Installing: /tmp/abc/share/apps/konsole/Linux.colorscheme
+-- Installing: /tmp/abc/share/apps/konsole/DarkPastels.colorscheme
+-- Installing: /tmp/abc/share/apps/konsole/RedOnBlack.colorscheme
+-- Installing: /tmp/abc/share/apps/konsole/Solarized.colorscheme
+-- Installing: /tmp/abc/share/apps/konsole/default.keytab
+-- Installing: /tmp/abc/share/apps/konsole/linux.keytab
+-- Installing: /tmp/abc/share/apps/konsole/solaris.keytab
+-- Installing: /tmp/abc/share/apps/konsole/README.KeyTab
+-- Installing: /tmp/abc/share/apps/konsole/Shell.profile
+-- Installing: /tmp/abc/share/apps/kconf_update/konsole.upd
+-- Installing: /tmp/abc/share/apps/kconf_update/konsole-2.9.0-global-options.sh
+-- Installing: /tmp/abc/share/apps/kconf_update/konsole-2.9.0-colorscheme-bold-key.sh
+-- Installing: /tmp/abc/share/applications/kde4/konsole.desktop
+-- Installing: /tmp/abc/share/kde4/servicetypes/terminalemulator.desktop
+-- Installing: /tmp/abc/share/kde4/services/konsolepart.desktop
+-- Installing: /tmp/abc/share/kde4/services/ServiceMenus/konsolehere.desktop
+-- Installing: /tmp/abc/share/apps/konsole/konsole.notifyrc
+-- Installing: /tmp/abc/share/apps/konsole/konsoleui.rc
+-- Installing: /tmp/abc/share/apps/konsole/sessionui.rc
+-- Installing: /tmp/abc/share/apps/konsole/partui.rc
+-- Installing: /tmp/abc/share/doc/HTML/en/konsole/index.cache.bz2
+-- Installing: /tmp/abc/share/doc/HTML/en/konsole/index.docbook
+
+

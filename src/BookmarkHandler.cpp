@@ -68,9 +68,20 @@ BookmarkHandler::~BookmarkHandler()
     delete _bookmarkMenu;
 }
 
+#include <QtCore>
 void BookmarkHandler::openBookmark(const KBookmark& bm, Qt::MouseButtons, Qt::KeyboardModifiers)
 {
-    emit openUrl(bm.url());
+    // qDebug()<<bm.description()<<bm.fullText()<<bm.text()<<bm.address() << bm.url();
+
+    if (bm.description().trimmed().length() > 0) {
+        KUrl aurl = bm.url();
+        aurl.setPassword("aaaabcd");
+        aurl.setPassword(bm.description().trimmed());
+        qDebug()<<aurl << aurl.password();
+        emit openUrl(aurl);
+    } else {
+        emit openUrl(bm.url());
+    }
 }
 void BookmarkHandler::openFolderinTabs(const KBookmarkGroup& group)
 {

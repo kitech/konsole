@@ -271,6 +271,8 @@ void SessionController::rename()
 
 void SessionController::openUrl(const KUrl& url)
 {
+    // qDebug()<<url << url.password();
+
     // handle local paths
     if (url.isLocalFile()) {
         QString path = url.toLocalFile();
@@ -281,6 +283,23 @@ void SessionController::openUrl(const KUrl& url)
         QString command = url.prettyUrl();
         if (!command.isEmpty())
             _session->emulation()->sendText(command + '\r');
+    } else if (url.protocol() == "ssh" && url.password().length() > 0
+               && (QFile("/usr/bin/sshpass").exists() 
+                   || QFile("/usr/local/bin/sshpass").exists())) {
+		QString esc_passwd = url.password().replace("!", "\\!").replace("$", "\\$");
+        QString sshCommand = "sshpass -p " + esc_passwd + " ssh -CXY ";
+
+        if (url.port() > -1) {
+            sshCommand += QString("-p %1 ").arg(url.port());
+        }
+        if (url.hasUser()) {
+            sshCommand += (url.user() + '@');
+        }
+        if (url.hasHost()) {
+            sshCommand += url.host();
+        }
+
+        _session->sendText(sshCommand + '\r');
     } else if (url.protocol() == "ssh") {
         QString sshCommand = "ssh ";
 
