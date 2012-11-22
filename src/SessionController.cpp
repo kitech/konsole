@@ -22,9 +22,12 @@
 #include "SessionController.h"
 
 // Qt
-#include <QtGui/QApplication>
-#include <QtGui/QMenu>
+#include <QApplication>
+#include <QMenu>
 #include <QtGui/QKeyEvent>
+#include <QPrinter>
+#include <QPrintDialog>
+#include <QPainter>
 
 // KDE
 #include <KAction>
@@ -48,6 +51,8 @@
 #include <KUriFilter>
 #include <KStringHandler>
 #include <kcodecaction.h>
+#include <KConfigGroup>
+#include <KGlobal>
 
 // Konsole
 #include "EditProfileDialog.h"
@@ -64,12 +69,16 @@
 #include "TerminalDisplay.h"
 #include "SessionManager.h"
 #include "Enumeration.h"
+#include "PrintOptions.h"
 
 // for SaveHistoryTask
 #include <KFileDialog>
 #include <KIO/Job>
 #include <KJob>
 #include "TerminalCharacterDecoder.h"
+
+// For Unix signal names
+#include <signal.h>
 
 using namespace Konsole;
 
@@ -93,7 +102,7 @@ SessionController::SessionController(Session* session , TerminalDisplay* view, Q
     , _viewUrlFilter(0)
     , _searchFilter(0)
     , _copyInputToAllTabsAction(0)
-    , _searchToggleAction(0)
+    , _findAction(0)
     , _findNextAction(0)
     , _findPreviousAction(0)
     , _urlFilterUpdateRequired(false)
@@ -104,6 +113,8 @@ SessionController::SessionController(Session* session , TerminalDisplay* view, Q
     , _listenForScreenWindowUpdates(false)
     , _preventClose(false)
     , _keepIconUntilInteraction(false)
+    , _showMenuAction(0)
+    , _isSearchBarEnabled(false)
 {
     Q_ASSERT(session);
     Q_ASSERT(view);
@@ -188,6 +199,11 @@ SessionController::SessionController(Session* session , TerminalDisplay* view, Q
     backgroundTimer->start();
 
     _allControllers.insert(this);
+
+    // A list of programs that accept Ctrl+C to clear command line used
+    // before outputting bookmark.
+    _bookmarkValidProgramsToClear << "bash" << "fish" << "sh";
+    _bookmarkValidProgramsToClear << "tcsh" << "zsh";
 }
 
 SessionController::~SessionController()
@@ -272,6 +288,13 @@ void SessionController::rename()
 void SessionController::openUrl(const KUrl& url)
 {
     // qDebug()<<url << url.password();
+
+    // Clear shell's command line
+    if (!_session->isForegroundProcessActive()
+            && _bookmarkValidProgramsToClear.contains(_session->foregroundProcessName())) {
+        _session->emulation()->sendText(QChar(0x03)); // Ctrl+C
+        _session->emulation()->sendText(QChar('\n'));
+    }
 
     // handle local paths
     if (url.isLocalFile()) {
@@ -376,7 +399,7 @@ void SessionController::updateWebSearchMenu()
     _webSearchMenu->setVisible(false);
     _webSearchMenu->menu()->clear();
 
-    if ( _selectedText.isEmpty() )
+    if (_selectedText.isEmpty())
         return;
 
     QString searchText = _selectedText;
@@ -395,8 +418,7 @@ void SessionController::updateWebSearchMenu()
 
             KAction* action = 0;
 
-            foreach(const QString& searchProvider, searchProviders)
-            {
+            foreach(const QString& searchProvider, searchProviders) {
                 action = new KAction(searchProvider, _webSearchMenu);
                 action->setIcon(KIcon(filterData.iconNameForPreferredSearchProvider(searchProvider)));
                 action->setData(filterData.queryForPreferredSearchProvider(searchProvider));
@@ -433,6 +455,12 @@ void SessionController::handleWebShortcutAction()
 void SessionController::configureWebShortcuts()
 {
     KToolInvocation::kdeinitExec("kcmshell4", QStringList() << "ebrowsing");
+}
+
+void SessionController::sendSignal(QAction* action)
+{
+    const int signal = action->data().value<int>();
+    _session->sendSignal(signal);
 }
 
 bool SessionController::eventFilter(QObject* watched , QEvent* event)
@@ -515,7 +543,7 @@ void SessionController::setSearchBar(IncrementalSearchBar* searchBar)
 
         // if the search bar was previously active
         // then re-enter search mode
-        enableSearchBar(_searchToggleAction->isChecked());
+        enableSearchBar(_isSearchBarEnabled);
     }
 }
 IncrementalSearchBar* SessionController::searchBar() const
@@ -525,7 +553,7 @@ IncrementalSearchBar* SessionController::searchBar() const
 
 void SessionController::setShowMenuAction(QAction* action)
 {
-    actionCollection()->addAction("show-menubar", action);
+    _showMenuAction = action;
 }
 
 void SessionController::setupCommonActions()
@@ -573,6 +601,10 @@ void SessionController::setupCommonActions()
     action = KStandardAction::saveAs(this, SLOT(saveHistory()), collection);
     action->setText(i18n("Save Output &As..."));
 
+    action = KStandardAction::print(this, SLOT(print_screen()), collection);
+    action->setText(i18n("&Print Screen..."));
+    action->setShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_P));
+
     action = collection->addAction("adjust-history", this, SLOT(showHistoryOptions()));
     action->setText(i18n("Adjust Scrollback..."));
     action->setIcon(KIcon("configure"));
@@ -596,10 +628,8 @@ void SessionController::setupCommonActions()
     connect(_switchProfileMenu->menu(), SIGNAL(aboutToShow()), this, SLOT(prepareSwitchProfileMenu()));
 
     // History
-    _searchToggleAction = KStandardAction::find(this, 0, collection);
-    _searchToggleAction->setShortcut(QKeySequence());
-    _searchToggleAction->setCheckable(true);
-    connect(_searchToggleAction, SIGNAL(toggled(bool)), this, SLOT(searchHistory(bool)));
+    _findAction = KStandardAction::find(this, SLOT(searchBarEvent()), collection);
+    _findAction->setShortcut(QKeySequence());
 
     _findNextAction = KStandardAction::findNext(this, SLOT(findNextInHistory()), collection);
     _findNextAction->setShortcut(QKeySequence());
@@ -688,7 +718,52 @@ void SessionController::setupExtraActions()
     action->setIcon(KIcon("format-font-size-less"));
     action->setShortcut(KShortcut(Qt::CTRL | Qt::Key_Minus));
 
-    _searchToggleAction->setShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_F));
+    // Send signal
+    KSelectAction* sendSignalActions = collection->add<KSelectAction>("send-signal");
+    sendSignalActions->setText(i18n("Send Signal"));
+    connect(sendSignalActions, SIGNAL(triggered(QAction*)), this, SLOT(sendSignal(QAction*)));
+
+    action = collection->addAction("sigstop-signal");
+    action->setText(i18n("&Suspend Task")   + " (STOP)");
+    action->setData(SIGSTOP);
+    sendSignalActions->addAction(action);
+
+    action = collection->addAction("sigcont-signal");
+    action->setText(i18n("&Continue Task")  + " (CONT)");
+    action->setData(SIGCONT);
+    sendSignalActions->addAction(action);
+
+    action = collection->addAction("sighup-signal");
+    action->setText(i18n("&Hangup")         + " (HUP)");
+    action->setData(SIGHUP);
+    sendSignalActions->addAction(action);
+
+    action = collection->addAction("sigint-signal");
+    action->setText(i18n("&Interrupt Task") + " (INT)");
+    action->setData(SIGINT);
+    sendSignalActions->addAction(action);
+
+    action = collection->addAction("sigterm-signal");
+    action->setText(i18n("&Terminate Task") + " (TERM)");
+    action->setData(SIGTERM);
+    sendSignalActions->addAction(action);
+
+    action = collection->addAction("sigkill-signal");
+    action->setText(i18n("&Kill Task")      + " (KILL)");
+    action->setData(SIGKILL);
+    sendSignalActions->addAction(action);
+
+    action = collection->addAction("sigusr1-signal");
+    action->setText(i18n("User Signal &1")   + " (USR1)");
+    action->setData(SIGUSR1);
+    sendSignalActions->addAction(action);
+
+    action = collection->addAction("sigusr2-signal");
+    action->setText(i18n("User Signal &2")   + " (USR2)");
+    action->setData(SIGUSR2);
+    sendSignalActions->addAction(action);
+
+    _findAction->setShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_F));
     _findNextAction->setShortcut(QKeySequence(Qt::Key_F3));
     _findPreviousAction->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_F3));
 }
@@ -992,7 +1067,8 @@ void SessionController::copyInputToNone()
 
 void SessionController::searchClosed()
 {
-    _searchToggleAction->toggle();
+    _isSearchBarEnabled = false;
+    searchHistory(false);
 }
 
 void SessionController::listenForScreenWindowUpdates()
@@ -1012,6 +1088,17 @@ void SessionController::updateSearchFilter()
 {
     if (_searchFilter && _searchBar) {
         _view->processFilters();
+    }
+}
+
+void SessionController::searchBarEvent()
+{
+    if (_searchBar->isVisible()) {
+        // refresh focus
+        _searchBar->setVisible(true);
+    } else {
+        searchHistory(true);
+        _isSearchBarEnabled = true;
     }
 }
 
@@ -1114,8 +1201,7 @@ void SessionController::beginSearch(const QString& text , int direction)
         task->setAutoDelete(true);
         task->addScreenWindow(_session , _view->screenWindow());
         task->execute();
-    }
-    else if (text.isEmpty()) {
+    } else if (text.isEmpty()) {
         searchCompleted(false);
     }
 
@@ -1198,6 +1284,33 @@ void SessionController::scrollBackOptionsChanged(int mode, int lines)
         _session->setHistoryType(HistoryTypeFile());
         break;
     }
+}
+
+void SessionController::print_screen()
+{
+    QPrinter printer;
+
+    QPointer<QPrintDialog> dialog = new QPrintDialog(&printer, _view);
+    PrintOptions* options = new PrintOptions();
+
+    dialog->setOptionTabs(QList<QWidget*>() << options);
+    dialog->setWindowTitle(i18n("Print Shell"));
+    connect(dialog, SIGNAL(accepted()), options, SLOT(saveSettings()));
+    if (dialog->exec() != QDialog::Accepted)
+        return;
+
+    QPainter painter;
+    painter.begin(&printer);
+
+    KConfigGroup configGroup(KGlobal::config(), "PrintOptions");
+
+    if (configGroup.readEntry("ScaleOutput", true)) {
+        double scale = qMin(printer.pageRect().width() / double(_view->width()),
+                            printer.pageRect().height() / double(_view->height()));
+        painter.scale(scale, scale);
+    }
+
+    _view->printContent(painter, configGroup.readEntry("PrinterFriendly", true));
 }
 
 void SessionController::saveHistory()
@@ -1310,6 +1423,14 @@ void SessionController::showDisplayContextMenu(const QPoint& position)
         updateWebSearchMenu();
 
         _preventClose = true;
+
+        if (_showMenuAction) {
+            if (  _showMenuAction->isChecked() ) {
+                popup->removeAction( _showMenuAction);
+            } else {
+                popup->insertAction(_switchProfileMenu, _showMenuAction);
+            }
+        }
 
         QAction* chosen = popup->exec(_view->mapToGlobal(position));
 

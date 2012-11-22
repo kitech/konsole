@@ -23,7 +23,7 @@
 // Qt
 #include <QtCore/QSignalMapper>
 #include <QtCore/QStringList>
-#include <QtGui/QMenu>
+#include <QMenu>
 #include <QtDBus/QtDBus>
 
 // KDE
@@ -620,12 +620,12 @@ ViewContainer* ViewManager::createContainer()
     container->setStyleSheet(_navigationStyleSheet);
     if (_showQuickButtons) {
         container->setFeatures(container->features()
-                | ViewContainer::QuickNewView
-                | ViewContainer::QuickCloseView);
+                               | ViewContainer::QuickNewView
+                               | ViewContainer::QuickCloseView);
     } else {
         container->setFeatures(container->features()
-                & ~ViewContainer::QuickNewView
-                & ~ViewContainer::QuickCloseView);
+                               & ~ViewContainer::QuickNewView
+                               & ~ViewContainer::QuickCloseView);
     }
 
     // connect signals and slots
@@ -803,7 +803,12 @@ void ViewManager::applyProfileToView(TerminalDisplay* view , const Profile::Ptr 
 
     view->setAutoCopySelectedText(profile->autoCopySelectedText());
     view->setUnderlineLinks(profile->underlineLinksEnabled());
+    view->setControlDrag(profile->property<bool>(Profile::CtrlRequiredForDrag));
     view->setBidiEnabled(profile->bidiRenderingEnabled());
+    view->setLineSpacing(profile->lineSpacing());
+    view->setTrimTrailingSpaces(profile->property<bool>(Profile::TrimTrailingSpacesInSelectedText));
+
+    view->setOpenLinksByDirectClick(profile->property<bool>(Profile::OpenLinksByDirectClickEnabled));
 
     int middleClickPasteMode = profile->property<int>(Profile::MiddleClickPasteMode);
     if (middleClickPasteMode == Enum::PasteFromX11Selection)
@@ -822,7 +827,7 @@ void ViewManager::applyProfileToView(TerminalDisplay* view , const Profile::Ptr 
         view->setKeyboardCursorShape(Enum::UnderlineCursor);
 
     // cursor color
-    if ( profile->useCustomCursorColor() ) {
+    if (profile->useCustomCursorColor()) {
         const QColor& cursorColor = profile->customCursorColor();
         view->setKeyboardCursorColor(cursorColor);
     } else {
@@ -977,16 +982,14 @@ int ViewManager::newSession()
 
 int ViewManager::newSession(QString profile, QString directory)
 {
-    QList<Profile::Ptr> profilelist = ProfileManager::instance()->allProfiles();
-    QList<Profile::Ptr>::iterator i = profilelist.begin();
-
+    const QList<Profile::Ptr> profilelist = ProfileManager::instance()->allProfiles();
     Profile::Ptr profileptr = ProfileManager::instance()->defaultProfile();
 
-    while (i != profilelist.end()) {
-        Profile::Ptr ptr = *i;
-        if (ptr->name().compare(profile) == 0)
-            profileptr = ptr;
-        i++;
+    for (int i = 0; i < profilelist.size(); ++i) {
+        if (profilelist.at(i)->name() == profile) {
+            profileptr = profilelist.at(i);
+            break;
+        }
     }
 
     Session* session = SessionManager::instance()->createSession(profileptr);
@@ -1080,12 +1083,12 @@ void ViewManager::setShowQuickButtons(bool show)
     foreach(ViewContainer* container, _viewSplitter->containers()) {
         if (_showQuickButtons) {
             container->setFeatures(container->features()
-                    | ViewContainer::QuickNewView
-                    | ViewContainer::QuickCloseView);
+                                   | ViewContainer::QuickNewView
+                                   | ViewContainer::QuickCloseView);
         } else {
             container->setFeatures(container->features()
-                    & ~ViewContainer::QuickNewView
-                    & ~ViewContainer::QuickCloseView);
+                                   & ~ViewContainer::QuickNewView
+                                   & ~ViewContainer::QuickCloseView);
         }
     }
 }

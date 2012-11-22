@@ -78,6 +78,7 @@ const Profile::PropertyInfo Profile::DefaultPropertyNames[] = {
     , { ColorScheme , "colors" , 0 , QVariant::String }
     , { AntiAliasFonts, "AntiAliasFonts" , APPEARANCE_GROUP , QVariant::Bool }
     , { BoldIntense, "BoldIntense", APPEARANCE_GROUP, QVariant::Bool }
+    , { LineSpacing , "LineSpacing" , APPEARANCE_GROUP , QVariant::Int }
 
     // Keyboard
     , { KeyBindings , "KeyBindings" , KEYBOARD_GROUP , QVariant::String }
@@ -103,7 +104,10 @@ const Profile::PropertyInfo Profile::DefaultPropertyNames[] = {
     , { WordCharacters , "WordCharacters" , INTERACTION_GROUP , QVariant::String }
     , { TripleClickMode , "TripleClickMode" , INTERACTION_GROUP , QVariant::Int }
     , { UnderlineLinksEnabled , "UnderlineLinksEnabled" , INTERACTION_GROUP , QVariant::Bool }
+    , { OpenLinksByDirectClickEnabled , "OpenLinksByDirectClickEnabled" , INTERACTION_GROUP , QVariant::Bool }
+    , { CtrlRequiredForDrag, "CtrlRequiredForDrag" , INTERACTION_GROUP , QVariant::Bool }
     , { AutoCopySelectedText , "AutoCopySelectedText" , INTERACTION_GROUP , QVariant::Bool }
+    , { TrimTrailingSpacesInSelectedText , "TrimTrailingSpacesInSelectedText" , INTERACTION_GROUP , QVariant::Bool }
     , { PasteFromSelectionEnabled , "PasteFromSelectionEnabled" , INTERACTION_GROUP , QVariant::Bool }
     , { PasteFromClipboardEnabled , "PasteFromClipboardEnabled" , INTERACTION_GROUP , QVariant::Bool }
     , { MiddleClickPasteMode, "MiddleClickPasteMode" , INTERACTION_GROUP , QVariant::Int }
@@ -167,7 +171,10 @@ FallbackProfile::FallbackProfile()
     setProperty(FlowControlEnabled, true);
     setProperty(BlinkingTextEnabled, true);
     setProperty(UnderlineLinksEnabled, true);
+    setProperty(OpenLinksByDirectClickEnabled, false);
+    setProperty(CtrlRequiredForDrag, true);
     setProperty(AutoCopySelectedText, false);
+    setProperty(TrimTrailingSpacesInSelectedText, false);
     setProperty(PasteFromSelectionEnabled, true);
     setProperty(PasteFromClipboardEnabled, false);
     setProperty(MiddleClickPasteMode, Enum::PasteFromX11Selection);
@@ -175,6 +182,7 @@ FallbackProfile::FallbackProfile()
 
     setProperty(BlinkingCursorEnabled, false);
     setProperty(BidiRenderingEnabled, true);
+    setProperty(LineSpacing, 0);
     setProperty(CursorShape, Enum::BlockCursor);
     setProperty(UseCustomCursorColor, false);
     setProperty(CustomCursorColor, Qt::black);

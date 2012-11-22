@@ -1,9 +1,11 @@
 <!DOCTYPE kpartgui>
 
-<kpartgui name="session" version="20">
+<kpartgui name="session" version="24">
     <MenuBar>
         <Menu name="file">
             <Action name="file_save_as" group="session-operations"/>
+            <Separator group="session-operations"/>
+            <Action name="file_print" group="session-operations"/>
             <Separator group="session-operations"/>
             <Action name="open-browser" group="session-operations"/>
             <Action name="close-session" group="session-tab-operations"/>
@@ -15,6 +17,7 @@
             <Action name="select-all" group="session-edit-operations"/>
             <Separator group="session-edit-operations"/>
             <Action name="copy-input-to" group="session-edit-operations"/>
+            <Action name="send-signal" group="session-edit-operations"/>
             <Action name="rename-session" group="session-edit-operations"/>
             <Action name="zmodem-upload" group="session-edit-operations"/>
             <Separator group="session-edit-operations"/>
@@ -47,8 +50,6 @@
         <Action name="set-encoding"/>
         <Action name="clear-history"/>
         <Action name="adjust-history"/>
-        <Separator/>
-        <Action name="show-menubar"/>
         <Separator/>
         <Action name="switch-profile"/>
         <Action name="edit-current-profile"/>

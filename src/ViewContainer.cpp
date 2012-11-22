@@ -23,13 +23,13 @@
 #include "ViewContainer.h"
 
 // Qt
-#include <QtGui/QStackedWidget>
-#include <QtGui/QToolButton>
+#include <QStackedWidget>
+#include <QToolButton>
 #include <QtGui/QDrag>
 #include <QtGui/QDragMoveEvent>
 #include <QtCore/QMimeData>
-#include <QtGui/QHBoxLayout>
-#include <QtGui/QVBoxLayout>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
 
 // KDE
 #include <KColorScheme>
@@ -403,8 +403,7 @@ void TabbedViewContainer::navigationPositionChanged(NavigationPosition position)
         _layout->insertWidget(-1, searchBar());
         _layout->insertLayout(-1, _tabBarLayout);
         _tabBar->setShape(QTabBar::RoundedSouth);
-    } else
-    {
+    } else {
         Q_ASSERT(false); // should never reach here
     }
 }
@@ -476,30 +475,30 @@ void TabbedViewContainer::startTabDrag(int tab)
 
     if (drag->target()) {
         switch (action) {
-            case Qt::MoveAction:
-                // The MoveAction indicates the widget has been successfully
-                // moved into another tabbar/container, so remove the widget in
-                // current tabbar/container.
-                //
-                // Deleting the view may cause the view container to be deleted,
-                // which will also delete the QDrag object. This can cause a
-                // crash if Qt's internal drag-and-drop handling tries to delete
-                // it later.
-                //
-                // For now set the QDrag's parent to 0 so that it won't be
-                // deleted if this view container is destroyed.
-                //
-                // FIXME: Resolve this properly
-                drag->setParent(0);
-                removeView(view);
-                break;
-            case Qt::IgnoreAction:
-                // The IgroreAction is used by the tabbar to indicate the
-                // special case of dropping one tab into its existing position.
-                // So nothing need to do here.
-                break;
-            default:
-                break;
+        case Qt::MoveAction:
+            // The MoveAction indicates the widget has been successfully
+            // moved into another tabbar/container, so remove the widget in
+            // current tabbar/container.
+            //
+            // Deleting the view may cause the view container to be deleted,
+            // which will also delete the QDrag object. This can cause a
+            // crash if Qt's internal drag-and-drop handling tries to delete
+            // it later.
+            //
+            // For now set the QDrag's parent to 0 so that it won't be
+            // deleted if this view container is destroyed.
+            //
+            // FIXME: Resolve this properly
+            drag->setParent(0);
+            removeView(view);
+            break;
+        case Qt::IgnoreAction:
+            // The IgroreAction is used by the tabbar to indicate the
+            // special case of dropping one tab into its existing position.
+            // So nothing need to do here.
+            break;
+        default:
+            break;
         }
     } else {
         // if the tab is dragged onto something that does not accept this
@@ -514,7 +513,7 @@ void TabbedViewContainer::startTabDrag(int tab)
     }
 }
 
-void TabbedViewContainer::querySourceIndex(const QDropEvent* event ,int& sourceIndex)
+void TabbedViewContainer::querySourceIndex(const QDropEvent* event, int& sourceIndex)
 {
     const int droppedId = ViewProperties::decodeMimeData(event->mimeData());
 
@@ -530,7 +529,7 @@ void TabbedViewContainer::querySourceIndex(const QDropEvent* event ,int& sourceI
     sourceIndex = index;
 }
 
-void TabbedViewContainer::onMoveViewRequest(int index, const QDropEvent* event ,bool& success)
+void TabbedViewContainer::onMoveViewRequest(int index, const QDropEvent* event, bool& success)
 {
     const int droppedId = ViewProperties::decodeMimeData(event->mimeData());
     emit moveViewRequest(index, droppedId, success);

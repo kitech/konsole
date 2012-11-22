@@ -871,7 +871,7 @@ For more information, please visit
 <listitem><para><action>Create tabs</action> as specified in the given tabs configuration file.
 </para>
 <note><para>The file has one tab per line in the following format:</para><para>
-title: This is the title;; command: run me
+title: PUT A TITLE ;; command: PUT A COMMAND ;; workdir: PUT A DIRECOTRY
 </para></note>
 </listitem>
 </varlistentry>
@@ -1148,6 +1148,12 @@ This is needed for some scripts and commands to work as expected:
     </itemizedlist>
 
 </para></listitem>
+
+<listitem>
+<para>Some fonts might be unavailable for usage in &konsole;, although they are available in other applications. That doesn't mean there is a bug in &konsole;. &konsole; requires monospaced fonts to provide the best visual result, so it asks &Qt; to only list monospaced fonts.</para>
+
+<para>If you are sure a font is really monospaced but unavailable in &konsole;, then please report the problem to <ulink url="https://bugreports.qt-project.org/">&Qt;</ulink>.</para>
+</listitem>
 
 <listitem><para>
 In KDE3, each tab had its own process ID.  However, in KDE4, all the tabs use the same process ID.  This has the side-effect that if one tab's process has issues, all the other tabs may experience issues as well.

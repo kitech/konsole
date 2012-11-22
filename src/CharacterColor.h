@@ -60,7 +60,7 @@ public:
      * @param weight Specifies the font weight to use when drawing text with this color.
      */
     explicit ColorEntry(QColor c,  FontWeight weight = UseCurrentFormat)
-             : color(c), fontWeight(weight) {}
+        : color(c), fontWeight(weight) {}
 
     /**
      * Constructs a new color palette entry with an undefined color, and
@@ -175,7 +175,7 @@ public:
     /**
      * Returns true if this character color entry is valid.
      */
-    bool isValid() {
+    bool isValid() const {
         return _colorSpace != COLOR_SPACE_UNDEFINED;
     }
 

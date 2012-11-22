@@ -163,6 +163,9 @@ public:
          * Ctrl+Q) have any effect.  Also known as Xon/Xoff
          */
         FlowControlEnabled,
+        /** (int) Specifies the pixels between the terminal lines.
+         */
+        LineSpacing,
         /** (bool) Specifies whether the cursor blinks ( in a manner similar
          * to text editing applications )
          */
@@ -196,8 +199,14 @@ public:
          * underlined when hovered by the mouse pointer.
          */
         UnderlineLinksEnabled,
+        /** (bool) If true, links can be opened by direct mouse click.*/
+        OpenLinksByDirectClickEnabled,
+        /** (bool) If true, control key must be pressed to click and drag selected text. */
+        CtrlRequiredForDrag,
         /** (bool) If true, automatically copy selected text into the clipboard */
         AutoCopySelectedText,
+        /** (bool) If true, trailing spaces are trimmed in selected text */
+        TrimTrailingSpacesInSelectedText,
         /** (bool) If true, middle mouse button pastes from X Selection */
         PasteFromSelectionEnabled,
         /** (bool) If true, middle mouse button pastes from Clipboard */
@@ -402,6 +411,12 @@ public:
     bool bidiRenderingEnabled() const {
         return property<bool>(Profile::BidiRenderingEnabled);
     }
+
+    /** Convenience method for property<bool>(Profile::LineSpacing) */
+    int lineSpacing() const {
+        return property<int>(Profile::LineSpacing);
+    }
+
 
     /** Convenience method for property<bool>(Profile::BlinkingTextEnabled) */
     bool blinkingTextEnabled() const {

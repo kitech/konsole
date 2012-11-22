@@ -430,7 +430,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QLabel" name="fontPreviewLabel">
+             <widget class="KSqueezedTextLabel" name="fontPreviewLabel">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                 <horstretch>1</horstretch>
@@ -439,6 +439,9 @@
               </property>
               <property name="text">
                <string comment="KDE::DoNotExtract">FONT PREVIEW TEXT</string>
+              </property>
+              <property name="textElideMode">
+               <enum>Qt::ElideRight</enum>
               </property>
              </widget>
             </item>
@@ -457,32 +460,18 @@
              </widget>
             </item>
             <item>
-             <widget class="QLabel" name="label_5">
-              <property name="text">
-               <string comment="@item:inrange Minimum Size">Small</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QSlider" name="fontSizeSlider">
-              <property name="toolTip">
-               <string>Adjust the font size used in this profile</string>
-              </property>
+             <widget class="KDoubleNumInput" name="fontSizeInput">
               <property name="minimum">
-               <number>9</number>
+               <double>4.000000000000000</double>
               </property>
               <property name="maximum">
-               <number>20</number>
+               <double>999.000000000000000</double>
               </property>
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
+              <property name="singleStep">
+               <double>1.000000000000000</double>
               </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="label_6">
-              <property name="text">
-               <string comment="@item:inrange Maximum Size">Large</string>
+              <property name="decimals">
+               <number>1</number>
               </property>
              </widget>
             </item>
@@ -495,6 +484,19 @@
                <string>Select Font...</string>
               </property>
              </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_4">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
             </item>
            </layout>
           </item>
@@ -783,6 +785,16 @@
            </widget>
           </item>
           <item>
+           <widget class="QCheckBox" name="trimTrailingSpacesButton">
+            <property name="toolTip">
+             <string>Trim trailing spaces in selected text, useful in some instances</string>
+            </property>
+            <property name="text">
+             <string>Trim trailing spaces</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <spacer name="horizontalSpacer_5">
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
@@ -835,6 +847,49 @@
             </property>
             <property name="text">
              <string>Underline links</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QHBoxLayout">
+            <item>
+             <spacer name="horizontalSpacer">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeType">
+               <enum>QSizePolicy::Fixed</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>10</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="openLinksByDirectClickButton">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
+              <property name="toolTip">
+               <string>Text recognized as a link or an email address can be opened by direct mouse click.</string>
+              </property>
+              <property name="text">
+               <string>Open links by direct click</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="ctrlRequiredForDragButton">
+            <property name="toolTip">
+             <string>Selected text will require control key plus click to drag.</string>
+            </property>
+            <property name="text">
+             <string>Require Ctrl key for drag and drop</string>
             </property>
            </widget>
           </item>
@@ -917,6 +972,43 @@
              <string>Enable Bi-Directional text rendering</string>
             </property>
            </widget>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout">
+            <item>
+             <widget class="QLabel" name="lineSpacingLabel">
+              <property name="text">
+               <string>Line Spacing:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="KIntSpinBox" name="lineSpacingSpinner">
+              <property name="toolTip">
+               <string>The number of pixels between two lines</string>
+              </property>
+              <property name="minimum">
+               <number>0</number>
+              </property>
+              <property name="maximum">
+               <number>5</number>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_11">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
           </item>
          </layout>
         </widget>
@@ -1120,6 +1212,11 @@
  </widget>
  <customwidgets>
   <customwidget>
+   <class>KDoubleNumInput</class>
+   <extends>QWidget</extends>
+   <header>knuminput.h</header>
+  </customwidget>
+  <customwidget>
    <class>KColorButton</class>
    <extends>QPushButton</extends>
    <header>kcolorbutton.h</header>
@@ -1138,6 +1235,11 @@
    <class>KIntSpinBox</class>
    <extends>QSpinBox</extends>
    <header>knuminput.h</header>
+  </customwidget>
+  <customwidget>
+   <class>KSqueezedTextLabel</class>
+   <extends>QLabel</extends>
+   <header>ksqueezedtextlabel.h</header>
   </customwidget>
   <customwidget>
    <class>KMessageWidget</class>

@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Service
-Icon=utilities-terminal
 X-KDE-ServiceTypes=KParts/ReadOnlyPart,Browser/View,inode/directory,TerminalEmulator
+Icon=utilities-terminal
 
 X-KDE-Library=libkonsolepart
 X-KDE-BrowserView-AllowAsDefault=false
@@ -9,6 +9,8 @@ X-KDE-BrowserView-HideFromMenus=true
 X-KDE-BrowserView-Toggable=true
 X-KDE-BrowserView-ToggableView-Orientation=horizontal
 X-KDE-BrowserView-FollowActive=true
+
+X-KDE-AuthorizeAction=shell_access
 
 Name=Terminal Emulator
 Name[af]=Terminaal Emulasie
@@ -68,7 +70,7 @@ Name[ms]=Pelagak Terminal
 Name[nb]=Terminalemulator
 Name[nds]=Terminal-Emulator
 Name[ne]=टर्मिनल इमुलेटर
-Name[nl]=Terminalemulator
+Name[nl]=Terminal
 Name[nn]=Terminalemulator
 Name[or]=ଟର୍ମିନାଲ ଯାନ୍ତ୍ରାନୁକରଣ
 Name[pa]=ਟਰਮੀਨਲ ਸਮਰੂਪ
@@ -101,4 +103,3 @@ Name[xh]=Umzami kulinganisela ngokulinganayo Wendlela yesiphelo
 Name[x-test]=xxTerminal Emulatorxx
 Name[zh_CN]=终端仿真器
 Name[zh_TW]=終端機模擬程式
-X-KDE-AuthorizeAction=shell_access

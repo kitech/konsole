@@ -224,9 +224,11 @@ private slots:
     void changeCodec(QTextCodec* codec);
     void enableSearchBar(bool showSearchBar);
     void searchHistory(bool showSearchBar);
+    void searchBarEvent();
     void findNextInHistory();
     void findPreviousInHistory();
     void changeSearchMatch();
+    void print_screen();
     void saveHistory();
     void showHistoryOptions();
     void clearHistory();
@@ -237,6 +239,7 @@ private slots:
     void switchProfile(Profile::Ptr profile);
     void handleWebShortcutAction();
     void configureWebShortcuts();
+    void sendSignal(QAction* action);
 
     // other
     void prepareSwitchProfileMenu();
@@ -304,7 +307,7 @@ private:
 
     KAction* _copyInputToAllTabsAction;
 
-    KAction* _searchToggleAction;
+    KAction* _findAction;
     KAction* _findNextAction;
     KAction* _findPreviousAction;
 
@@ -326,11 +329,17 @@ private:
 
     QString _selectedText;
 
+    QAction* _showMenuAction;
+
     static QSet<SessionController*> _allControllers;
     static int _lastControllerId;
     static const KIcon _activityIcon;
     static const KIcon _silenceIcon;
     static const KIcon _broadcastIcon;
+
+    QStringList _bookmarkValidProgramsToClear;
+
+    bool _isSearchBarEnabled;
 };
 inline bool SessionController::isValid() const
 {

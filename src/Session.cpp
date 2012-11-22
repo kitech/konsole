@@ -30,7 +30,7 @@
 #include <unistd.h>
 
 // Qt
-#include <QtGui/QApplication>
+#include <QApplication>
 #include <QtGui/QColor>
 #include <QtCore/QDir>
 #include <QtCore/QFile>
@@ -292,8 +292,7 @@ ProcessInfo* Session::updateWorkingDirectory()
     ProcessInfo* process = getProcessInfo();
 
     const QString currentDir = process->validCurrentDir();
-    if (currentDir != _currentWorkingDir)
-    {
+    if (currentDir != _currentWorkingDir) {
         _currentWorkingDir = currentDir;
         emit currentDirectoryChanged(_currentWorkingDir);
     }
@@ -726,6 +725,18 @@ void Session::refresh()
     _shellProcess->setWindowSize(existingSize.width() + 1, existingSize.height());
     usleep(500); // introduce small delay to avoid changing size too quickly
     _shellProcess->setWindowSize(existingSize.width(), existingSize.height());
+}
+
+void Session::sendSignal(int signal)
+{
+    const ProcessInfo* process = getProcessInfo();
+    bool ok = false;
+    int pid;
+    pid = process->foregroundPid(&ok);
+
+    if (ok) {
+        ::kill(pid, signal);
+    }
 }
 
 bool Session::kill(int signal)

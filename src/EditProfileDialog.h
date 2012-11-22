@@ -21,7 +21,7 @@
 #define EDITPROFILEDIALOG_H
 
 // Qt
-#include <QtGui/QAbstractItemDelegate>
+#include <QAbstractItemDelegate>
 #include <QtCore/QHash>
 #include <QtCore/QPointer>
 
@@ -118,9 +118,8 @@ private slots:
     void silenceSecondsChanged(int);
 
     // appearance page
-    void setFontSize(int pointSize);
-    void setFontSliderRange(const QFont&);
-    void setFontSliderValue(const QFont&);
+    void setFontSize(double pointSize);
+    void setFontInputValue(const QFont&);
     void setAntialiasText(bool enable);
     void setBoldIntense(bool enable);
     void showFontDialog();
@@ -150,7 +149,10 @@ private slots:
 
     // mouse page
     void toggleUnderlineLinks(bool);
+    void toggleOpenLinksByDirectClick(bool);
+    void toggleCtrlRequiredForDrag(bool);
     void toggleCopyTextToClipboard(bool);
+    void toggleTrimTrailingSpacesInSelectedText(bool);
     void pasteFromX11Selection();
     void pasteFromClipboard();
 
@@ -161,6 +163,7 @@ private slots:
     void toggleBlinkingText(bool);
     void toggleFlowControl(bool);
     void togglebidiRendering(bool);
+    void lineSpacingChanged(int);
     void toggleBlinkingCursor(bool);
 
     void setCursorShape(int);

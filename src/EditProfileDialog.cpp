@@ -26,7 +26,7 @@
 // Qt
 #include <QtGui/QBrush>
 #include <QtGui/QPainter>
-#include <QtGui/QStandardItem>
+#include <QStandardItem>
 #include <QtCore/QTextCodec>
 #include <QtGui/QLinearGradient>
 #include <QtGui/QRadialGradient>
@@ -450,11 +450,10 @@ void EditProfileDialog::setupAppearancePage(const Profile::Ptr profile)
 
     _ui->fontPreviewLabel->installEventFilter(this);
     _ui->fontPreviewLabel->setFont(profileFont);
-    setFontSliderRange(profileFont);
-    setFontSliderValue(profileFont);
+    setFontInputValue(profileFont);
 
-    connect(_ui->fontSizeSlider, SIGNAL(valueChanged(int)), this,
-            SLOT(setFontSize(int)));
+    connect(_ui->fontSizeInput, SIGNAL(valueChanged(double)), this,
+            SLOT(setFontSize(double)));
     connect(_ui->selectFontButton, SIGNAL(clicked()), this,
             SLOT(showFontDialog()));
 
@@ -551,6 +550,7 @@ void EditProfileDialog::updateKeyBindingsList(bool selectCurrentTranslator)
         const KeyboardTranslator* translator = keyManager->findTranslator(translatorName);
 
         QStandardItem* item = new QStandardItem(translator->description());
+        item->setEditable(false);
         item->setData(QVariant::fromValue(translator), Qt::UserRole + 1);
         item->setIcon(KIcon("preferences-desktop-keyboard"));
 
@@ -577,9 +577,7 @@ bool EditProfileDialog::eventFilter(QObject* watched , QEvent* aEvent)
     }
     if (watched == _ui->fontPreviewLabel && aEvent->type() == QEvent::FontChange) {
         const QFont& labelFont = _ui->fontPreviewLabel->font();
-        qreal fontSizeF = labelFont.pointSizeF();
-        QString fontSize  = KGlobal::locale()->formatNumber(fontSizeF, fontSizeF == floor(fontSizeF) ? 0 : 1);
-        _ui->fontPreviewLabel->setText(i18n("%1, size %2", labelFont.family(), fontSize));
+        _ui->fontPreviewLabel->setText(i18n("%1", labelFont.family()));
     }
 
     return KDialog::eventFilter(watched, aEvent);
@@ -987,8 +985,20 @@ void EditProfileDialog::setupMousePage(const Profile::Ptr profile)
             SLOT(toggleUnderlineLinks(bool))
         },
         {
+            _ui->ctrlRequiredForDragButton, Profile::CtrlRequiredForDrag,
+            SLOT(toggleCtrlRequiredForDrag(bool))
+        },
+        {
             _ui->copyTextToClipboardButton , Profile::AutoCopySelectedText,
             SLOT(toggleCopyTextToClipboard(bool))
+        },
+        {
+            _ui->trimTrailingSpacesButton , Profile::TrimTrailingSpacesInSelectedText,
+            SLOT(toggleTrimTrailingSpacesInSelectedText(bool))
+        },
+        {
+            _ui->openLinksByDirectClickButton , Profile::OpenLinksByDirectClickEnabled,
+            SLOT(toggleOpenLinksByDirectClick(bool))
         },
         { 0 , Profile::Property(0) , 0 }
     };
@@ -1014,6 +1024,8 @@ void EditProfileDialog::setupMousePage(const Profile::Ptr profile)
 
     connect(_ui->tripleClickModeCombo, SIGNAL(activated(int)), this,
             SLOT(TripleClickModeChanged(int)));
+
+    _ui->openLinksByDirectClickButton->setEnabled(_ui->underlineLinksButton->isChecked());
 }
 void EditProfileDialog::setupAdvancedPage(const Profile::Ptr profile)
 {
@@ -1036,6 +1048,12 @@ void EditProfileDialog::setupAdvancedPage(const Profile::Ptr profile)
         { 0 , Profile::Property(0) , 0 }
     };
     setupCheckBoxes(options , profile);
+
+    const int lineSpacing = profile->lineSpacing();
+    _ui->lineSpacingSpinner->setValue(lineSpacing);
+
+    connect(_ui->lineSpacingSpinner, SIGNAL(valueChanged(int)),
+            this, SLOT(lineSpacingChanged(int)));
 
     // cursor options
     if (profile->useCustomCursorColor())
@@ -1096,6 +1114,10 @@ void EditProfileDialog::togglebidiRendering(bool enable)
 {
     updateTempProfileProperty(Profile::BidiRenderingEnabled, enable);
 }
+void EditProfileDialog::lineSpacingChanged(int spacing)
+{
+    updateTempProfileProperty(Profile::LineSpacing, spacing);
+}
 void EditProfileDialog::toggleBlinkingCursor(bool enable)
 {
     updateTempProfileProperty(Profile::BlinkingCursorEnabled, enable);
@@ -1103,10 +1125,23 @@ void EditProfileDialog::toggleBlinkingCursor(bool enable)
 void EditProfileDialog::toggleUnderlineLinks(bool enable)
 {
     updateTempProfileProperty(Profile::UnderlineLinksEnabled, enable);
+    _ui->openLinksByDirectClickButton->setEnabled(enable);
+}
+void EditProfileDialog::toggleCtrlRequiredForDrag(bool enable)
+{
+    updateTempProfileProperty(Profile::CtrlRequiredForDrag, enable);
+}
+void EditProfileDialog::toggleOpenLinksByDirectClick(bool enable)
+{
+    updateTempProfileProperty(Profile::OpenLinksByDirectClickEnabled, enable);
 }
 void EditProfileDialog::toggleCopyTextToClipboard(bool enable)
 {
     updateTempProfileProperty(Profile::AutoCopySelectedText, enable);
+}
+void EditProfileDialog::toggleTrimTrailingSpacesInSelectedText(bool enable)
+{
+    updateTempProfileProperty(Profile::TrimTrailingSpacesInSelectedText, enable);
 }
 void EditProfileDialog::pasteFromX11Selection()
 {
@@ -1132,8 +1167,7 @@ void EditProfileDialog::fontSelected(const QFont& aFont)
 {
     QFont previewFont = aFont;
 
-    setFontSliderRange(aFont);
-    setFontSliderValue(aFont);
+    setFontInputValue(aFont);
 
     _ui->fontPreviewLabel->setFont(previewFont);
 
@@ -1167,28 +1201,19 @@ void EditProfileDialog::showFontDialog()
         fontSelected(currentFont);
     delete dialog.data();
 }
-void EditProfileDialog::setFontSize(int pointSize)
+void EditProfileDialog::setFontSize(double pointSize)
 {
     QFont newFont = _ui->fontPreviewLabel->font();
-    newFont.setPointSizeF(pointSize / 10.0);
+    newFont.setPointSizeF(pointSize);
     _ui->fontPreviewLabel->setFont(newFont);
 
     preview(Profile::Font, newFont);
     updateTempProfileProperty(Profile::Font, newFont);
 }
 
-void EditProfileDialog::setFontSliderRange(const QFont& aFont)
+void EditProfileDialog::setFontInputValue(const QFont& aFont)
 {
-    QSlider* slider = _ui->fontSizeSlider;
-    // Minimum on the slider is 4,
-    // Maximum is the greater of 2 times the current size and 14
-    slider->setRange(qMin(4 * 10, qRound(aFont.pointSizeF() * 10)),
-                     qMax(14 * 10, 2 * qRound(aFont.pointSize() * 10)));
-}
-
-void EditProfileDialog::setFontSliderValue(const QFont& aFont)
-{
-    _ui->fontSizeSlider->setValue(qRound(aFont.pointSize() * 10));
+    _ui->fontSizeInput->setValue(aFont.pointSizeF());
 }
 
 ColorSchemeViewDelegate::ColorSchemeViewDelegate(QObject* aParent)

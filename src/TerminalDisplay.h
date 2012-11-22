@@ -24,7 +24,7 @@
 // Qt
 #include <QtGui/QColor>
 #include <QtCore/QPointer>
-#include <QtGui/QWidget>
+#include <QWidget>
 
 // Konsole
 #include "Character.h"
@@ -150,11 +150,11 @@ public:
     /** Specifies whether or not text can blink. */
     void setBlinkingTextEnabled(bool blink);
 
-    void setCtrlDrag(bool enable) {
-        _ctrlDrag = enable;
+    void setControlDrag(bool enable) {
+        _ctrlRequiredForDrag = enable;
     }
-    bool ctrlDrag() const {
-        return _ctrlDrag;
+    bool ctrlRequiredForDrag() const {
+        return _ctrlRequiredForDrag;
     }
 
     /** Sets how the text is selected when the user triple clicks within the display. */
@@ -179,6 +179,35 @@ public:
      */
     bool getUnderlineLinks() const {
         return _underlineLinks;
+    }
+
+    /**
+     * Specifies whether links and email addresses should be opened when
+     * clicked with the mouse. Defaults to false.
+     */
+    void setOpenLinksByDirectClick(bool value) {
+        _openLinksByDirectClick = value;
+    }
+    /**
+     * Returns true if links and email addresses should be opened when
+     * clicked with the mouse.
+     */
+    bool getOpenLinksByDirectClick() const {
+        return _openLinksByDirectClick;
+    }
+
+    /**
+     * Sets whether trailing spaces should be trimmed in selected text.
+     */
+    void setTrimTrailingSpaces(bool enabled) {
+        _trimTrailingSpaces = enabled;
+    }
+
+    /**
+     * Returns true if trailing spaces should be trimmed in selected text.
+     */
+    bool trimTrailingSpaces() const {
+        return _trimTrailingSpaces;
     }
 
     void setLineSpacing(uint);
@@ -379,14 +408,6 @@ public:
      */
     void setBidiEnabled(bool set) {
         _bidiEnabled = set;
-        // See bug 280896 for more info
-#if QT_VERSION >= 0x040800
-        if (_bidiEnabled) {
-            setLineSpacing(0);
-        } else {
-            setLineSpacing(2);
-        }
-#endif
     }
     /**
      * Returns the status of the BiDi rendering in this widget.
@@ -406,6 +427,8 @@ public:
     void setScreenWindow(ScreenWindow* window);
     /** Returns the terminal screen section which is displayed in this widget.  See setScreenWindow() */
     ScreenWindow* screenWindow() const;
+
+    void printContent(QPainter& painter, bool friendly);
 
 public slots:
     /**
@@ -496,14 +519,20 @@ public slots:
     void bell(const QString& message);
 
     /**
+     * Gets the background of the display
+     * @see setBackgroundColor(), setColorTable(), setForegroundColor()
+     */
+    QColor getBackgroundColor() const;
+
+    /**
      * Sets the background of the display to the specified color.
-     * @see setColorTable(), setForegroundColor()
+     * @see setColorTable(), getBackgroundColor(), setForegroundColor()
      */
     void setBackgroundColor(const QColor& color);
 
     /**
      * Sets the text of the display to the specified color.
-     * @see setColorTable(), setBackgroundColor()
+     * @see setColorTable(), setBackgroundColor(), getBackgroundColor()
      */
     void setForegroundColor(const QColor& color);
 
@@ -622,12 +651,16 @@ private:
 
     // divides the part of the display specified by 'rect' into
     // fragments according to their colors and styles and calls
-    // drawTextFragment() to draw the fragments
+    // drawTextFragment() or drawPrinterFriendlyTextFragment()
+    // to draw the fragments
     void drawContents(QPainter& painter, const QRect& rect);
     // draws a section of text, all the text in this section
     // has a common color and style
     void drawTextFragment(QPainter& painter, const QRect& rect,
                           const QString& text, const Character* style);
+
+    void drawPrinterFriendlyTextFragment(QPainter& painter, const QRect& rect,
+                                         const QString& text, const Character* style);
     // draws the background for a text fragment
     // if useOpacitySetting is true then the color's alpha value will be set to
     // the display's transparency (set with setOpacity()), otherwise the background
@@ -764,9 +797,10 @@ private:
     QTimer* _blinkCursorTimer;
 
     bool _underlineLinks;     // Underline URL and hosts on mouse hover
+    bool _openLinksByDirectClick;     // Open URL and hosts by single mouse click
     bool _isFixedSize; // columns/lines are locked.
 
-    bool _ctrlDrag; // require Ctrl key for drag selected text
+    bool _ctrlRequiredForDrag; // require Ctrl key for drag selected text
 
     Enum::TripleClickModeEnum _tripleClickMode;
     bool _possibleTripleClick;  // is set in mouseDoubleClickEvent and deleted
@@ -808,6 +842,8 @@ private:
 
     bool _antialiasText;   // do we antialias or not
 
+    bool _printerFriendly; // are we currently painting to a printer in black/white mode
+
     //the delay in milliseconds between redrawing blinking text
     static const int TEXT_BLINK_DELAY = 500;
 
@@ -818,6 +854,9 @@ private:
     static const int DEFAULT_TOP_MARGIN = 1;
 
     SessionController* _sessionController;
+
+    bool _trimTrailingSpaces;   // trim trailing spaces in selected text
+
     friend class TerminalDisplayAccessible;
 };
 
