@@ -98,7 +98,7 @@ bool shouldUseNewProcess()
     QStringList qtProblematicOptions;
     qtProblematicOptions << "session" << "name" << "reverse"
                          << "stylesheet" << "graphicssystem";
-#ifdef Q_WS_X11
+#if defined(Q_WS_X11)
     qtProblematicOptions << "display" << "visual";
 #endif
     foreach(const QString& option, qtProblematicOptions) {
@@ -111,7 +111,7 @@ bool shouldUseNewProcess()
     const KCmdLineArgs* kdeArgs = KCmdLineArgs::parsedArgs("kde");
     QStringList kdeProblematicOptions;
     kdeProblematicOptions << "config" << "style";
-#ifdef Q_WS_X11
+#if defined(Q_WS_X11)
     kdeProblematicOptions << "waitforwm";
 #endif
     foreach(const QString& option, kdeProblematicOptions) {
@@ -142,8 +142,10 @@ bool shouldUseNewProcess()
     // Konsole and any debug output or warnings from Konsole are written to
     // the current terminal
     bool hasControllingTTY = false;
-    if (KDE_open("/dev/tty", O_RDONLY) != -1) {
+    const int fd = KDE_open("/dev/tty", O_RDONLY);
+    if (fd != -1) {
         hasControllingTTY = true;
+        close(fd);
     }
 
     return hasControllingTTY;

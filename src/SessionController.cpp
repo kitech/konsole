@@ -50,9 +50,15 @@
 #include <KDebug>
 #include <KUriFilter>
 #include <KStringHandler>
-#include <kcodecaction.h>
 #include <KConfigGroup>
 #include <KGlobal>
+
+#include <kdeversion.h>
+#if KDE_IS_VERSION(4, 9, 1)
+#include <KCodecAction>
+#else
+#include <kcodecaction.h>
+#endif
 
 // Konsole
 #include "EditProfileDialog.h"
@@ -382,7 +388,6 @@ void SessionController::selectionChanged(const QString& selectedText)
 {
     _selectedText = selectedText;
     updateCopyAction(selectedText);
-    updateWebSearchMenu();
 }
 
 void SessionController::updateCopyAction(const QString& selectedText)

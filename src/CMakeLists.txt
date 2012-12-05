@@ -9,13 +9,7 @@ include(CheckIncludeFiles)
 check_include_files("sys/proc.h"      HAVE_SYS_PROC_H)
 check_include_files("sys/proc_info.h" HAVE_SYS_PROC_INFO_H)
 
-configure_file (config-konsole.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config-konsole.h )
-
-############### Load the CTest options ###############
-# CTestCustom.cmake has to be in the CTEST_BINARY_DIR.
-# in the KDE build system, this is the same as CMAKE_BINARY_DIR.
-configure_file(tests/CTestCustom.cmake
-${CMAKE_CURRENT_BINARY_DIR}/tests/CTestCustom.cmake)
+configure_file(config-konsole.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config-konsole.h)
 
 
 ### Tests
@@ -28,9 +22,9 @@ ${CMAKE_CURRENT_BINARY_DIR}/tests/CTestCustom.cmake)
     ### Use cmake -DKONSOLE_BUILD_FONTEMBEDDER or/and -DKONSOLE_GENERATE_LINEFONT=1
     if(KONSOLE_BUILD_FONTEMBEDDER OR KONSOLE_GENERATE_LINEFONT)
         ### Font Embedder
-        set(fontembedder_SRCS fontembedder.cpp )
+        set(fontembedder_SRCS fontembedder.cpp)
         kde4_add_executable(fontembedder ${fontembedder_SRCS})
-        target_link_libraries(fontembedder  ${KDE4_KIO_LIBS} )
+        target_link_libraries(fontembedder  ${KDE4_KIO_LIBS})
 
         ### Line graphics font
         ### The below cmake doesn't work; it might be possible to automate it
@@ -49,8 +43,8 @@ ${CMAKE_CURRENT_BINARY_DIR}/tests/CTestCustom.cmake)
     # qdbuscpp2xml -M -s ViewManager.h -o org.kde.konsole.Konsole.xml
 
     # Generate dbus .xml files; do not store .xml in source folder
-    qt4_generate_dbus_interface( Session.h org.kde.konsole.Session.xml OPTIONS -m)
-    qt4_generate_dbus_interface( ViewManager.h org.kde.konsole.Window.xml OPTIONS -m)
+    qt4_generate_dbus_interface(Session.h org.kde.konsole.Session.xml OPTIONS -m)
+    qt4_generate_dbus_interface(ViewManager.h org.kde.konsole.Window.xml OPTIONS -m)
 
     qt4_add_dbus_adaptor( sessionadaptors_SRCS
                           ${CMAKE_CURRENT_BINARY_DIR}/org.kde.konsole.Session.xml
@@ -58,7 +52,7 @@ ${CMAKE_CURRENT_BINARY_DIR}/tests/CTestCustom.cmake)
                           Konsole::Session )
     qt4_add_dbus_adaptor( windowadaptors_SRCS
                           ${CMAKE_CURRENT_BINARY_DIR}/org.kde.konsole.Window.xml
-                          ViewManager.h 
+                          ViewManager.h
                           Konsole::ViewManager )
 
 
@@ -117,23 +111,14 @@ ${CMAKE_CURRENT_BINARY_DIR}/tests/CTestCustom.cmake)
     )
 
     set(konsole_LIBS
-        ${KDE4_KPTY_LIBRARY}
-        ${KDE4_KIO_LIBS}
-        ${QT_QTXML_LIBRARY}
-        ${KDE4_KNOTIFYCONFIG_LIBRARY}
-        ${X11_LIBRARIES}
         ${LIBKONQ_LIBRARY}
+        ${KDE4_KPTY_LIBS}
+        ${KDE4_KIO_LIBS}
+        ${KDE4_KNOTIFYCONFIG_LIBS}
+        ${QT_QTXML_LIBRARY}
+        ${X11_LIBRARIES}
     )
 
-    # XRender library for true transparency support
-    if(X11_Xrender_FOUND)
-        list(APPEND konsole_LIBS ${X11_Xrender_LIB})
-    endif(X11_Xrender_FOUND)
-
-# doesn't seem to be needed
-#    if(X11_XTest_FOUND)
-#        list(APPEND konsole_LIBS ${X11_XTest_LIB})
-#    endif(X11_XTest_FOUND)
 
 ### Konsole Application
 
@@ -167,7 +152,7 @@ ${CMAKE_CURRENT_BINARY_DIR}/tests/CTestCustom.cmake)
 
     kde4_add_app_icon(konsole_KDEINIT_SRCS "${KDE4_ICON_INSTALL_DIR}/oxygen/*/apps/utilities-terminal.png")
 
-    kde4_add_kdeinit_executable( konsole ${konsole_KDEINIT_SRCS})
+    kde4_add_kdeinit_executable(konsole ${konsole_KDEINIT_SRCS})
     target_link_libraries(kdeinit_konsole konsoleprivate)
 
     install(TARGETS kdeinit_konsole konsole konsoleprivate ${INSTALL_TARGETS_DEFAULT_ARGS})
@@ -175,21 +160,14 @@ ${CMAKE_CURRENT_BINARY_DIR}/tests/CTestCustom.cmake)
 ### Embedded Konsole KPart
 
     set(konsolepart_PART_SRCS
-      ${konsole_COMMON_SRCS}
       Part.cpp
    )
 
     kde4_add_plugin(konsolepart WITH_PREFIX ${konsolepart_PART_SRCS})
     set_target_properties(konsolepart PROPERTIES DEFINE_SYMBOL KONSOLE_PART)
     target_link_libraries(konsolepart ${KDE4_KPARTS_LIBS} konsoleprivate)
-    install(TARGETS konsolepart  DESTINATION ${PLUGIN_INSTALL_DIR} )
+    install(TARGETS konsolepart  DESTINATION ${PLUGIN_INSTALL_DIR})
 
 ### konsoleprofile command-line tool
 
-    install(FILES konsoleprofile PERMISSIONS OWNER_READ
-                                         OWNER_WRITE
-                                         OWNER_EXECUTE
-                                         GROUP_EXECUTE
-                                         GROUP_READ
-                                         WORLD_READ
-                                         WORLD_EXECUTE DESTINATION ${BIN_INSTALL_DIR})
+    install(PROGRAMS konsoleprofile DESTINATION ${BIN_INSTALL_DIR})
