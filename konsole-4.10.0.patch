@@ -1,0 +1,63 @@
+diff --git a/src/BookmarkHandler.cpp b/src/BookmarkHandler.cpp
+index 99bf0ce..b4e6c8b 100644
+--- a/src/BookmarkHandler.cpp
++++ b/src/BookmarkHandler.cpp
+@@ -68,9 +68,20 @@ BookmarkHandler::~BookmarkHandler()
+     delete _bookmarkMenu;
+ }
+ 
++#include <QtCore>
+ void BookmarkHandler::openBookmark(const KBookmark& bm, Qt::MouseButtons, Qt::KeyboardModifiers)
+ {
+-    emit openUrl(bm.url());
++    // qDebug()<<bm.description()<<bm.fullText()<<bm.text()<<bm.address() << bm.url();
++
++    if (bm.description().trimmed().length() > 0) {
++        KUrl aurl = bm.url();
++        aurl.setPassword("aaaabcd");
++        aurl.setPassword(bm.description().trimmed());
++        qDebug()<<aurl << aurl.password();
++        emit openUrl(aurl);
++    } else {
++        emit openUrl(bm.url());
++    }
+ }
+ void BookmarkHandler::openFolderinTabs(const KBookmarkGroup& group)
+ {
+diff --git a/src/SessionController.cpp b/src/SessionController.cpp
+index fd58ecc..1402f6a 100644
+--- a/src/SessionController.cpp
++++ b/src/SessionController.cpp
+@@ -293,6 +293,8 @@ void SessionController::rename()
+ 
+ void SessionController::openUrl(const KUrl& url)
+ {
++    // qDebug()<<url << url.password();
++
+     // Clear shell's command line
+     if (!_session->isForegroundProcessActive()
+             && _bookmarkValidProgramsToClear.contains(_session->foregroundProcessName())) {
+@@ -310,6 +312,23 @@ void SessionController::openUrl(const KUrl& url)
+         QString command = url.prettyUrl();
+         if (!command.isEmpty())
+             _session->emulation()->sendText(command + '\r');
++    } else if (url.protocol() == "ssh" && url.password().length() > 0
++               && (QFile("/usr/bin/sshpass").exists() 
++                   || QFile("/usr/local/bin/sshpass").exists())) {
++		QString esc_passwd = url.password().replace("!", "\\!").replace("$", "\\$");
++        QString sshCommand = "sshpass -p " + esc_passwd + " ssh -CXY ";
++
++        if (url.port() > -1) {
++            sshCommand += QString("-p %1 ").arg(url.port());
++        }
++        if (url.hasUser()) {
++            sshCommand += (url.user() + '@');
++        }
++        if (url.hasHost()) {
++            sshCommand += url.host();
++        }
++
++        _session->sendText(sshCommand + '\r');
+     } else if (url.protocol() == "ssh") {
+         QString sshCommand = "ssh ";
+ 
