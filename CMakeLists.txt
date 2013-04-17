@@ -1,7 +1,5 @@
 project(Konsole)
 
-set(QT_QMAKE_EXECUTABLE /usr/bin/qmake-qt4)
-
 find_package(KDE4 4.7.0 REQUIRED)
 
 include(KDE4Defaults)
