@@ -79,7 +79,7 @@ public:
         Path,
         /** (QString) The descriptive name of this profile. */
         Name,
-        /** (QString) The untranslted name of this profile.
+        /** (QString) The untranslated name of this profile.
          * Warning: this is an internal property. Do not touch it.
          */
         UntranslatedName,
@@ -151,6 +151,10 @@ public:
          * See Enum::ScrollBarPositionEnum
          */
         ScrollBarPosition,
+	/** (bool) Specifies whether the PageUp/Down will scroll the full 
+	 * height or half height.
+         */
+        ScrollFullPage,
         /** (bool) Specifies whether the terminal will enable Bidirectional
          * text display
          */
@@ -245,7 +249,11 @@ public:
          *
          * In future, the format might be #.#.# to account for levels
          */
-        MenuIndex
+        MenuIndex,
+        /** (bool) If true, mouse wheel scroll with Ctrl key pressed
+         * increases/decreases the terminal font size.
+         */
+        MouseWheelZoomEnabled
     };
 
     /**
@@ -421,6 +429,11 @@ public:
     /** Convenience method for property<bool>(Profile::BlinkingTextEnabled) */
     bool blinkingTextEnabled() const {
         return property<bool>(Profile::BlinkingTextEnabled);
+    }
+
+    /** Convenience method for property<bool>(Profile::MouseWheelZoomEnabled) */
+    bool mouseWheelZoomEnabled() const {
+        return property<bool>(Profile::MouseWheelZoomEnabled);
     }
 
     /** Convenience method for property<bool>(Profile::BlinkingCursorEnabled) */

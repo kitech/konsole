@@ -37,12 +37,27 @@
 
 using namespace Konsole;
 
+// colorTable is half the length of _table in ColorScheme class
+// since intense colors are in a separated column
+const int COLOR_TABLE_ROW_LENGTH =  TABLE_COLORS / 2; 
+
+const int NAME_COLUMN = 0;           // column 0 : color names
+const int COLOR_COLUMN = 1;          // column 1 : actual colors
+const int INTENSE_COLOR_COLUMN = 2;  // column 2 : intense colors
+
 ColorSchemeEditor::ColorSchemeEditor(QWidget* aParent)
-    : QWidget(aParent)
+    : KDialog(aParent)
+    , _isNewScheme(false)
     , _colors(0)
 {
+    // Kdialog buttons
+    setButtons(KDialog::Ok | KDialog::Cancel | KDialog::Apply);
+    connect(this, SIGNAL(applyClicked()), this, SLOT(saveColorScheme()));
+    connect(this, SIGNAL(okClicked()), this, SLOT(saveColorScheme()));
+
+    // ui
     _ui = new Ui::ColorSchemeEditor();
-    _ui->setupUi(this);
+    _ui->setupUi(mainWidget());
 
     // description edit
     _ui->descriptionEdit->setClearButtonShown(true);
@@ -72,14 +87,19 @@ ColorSchemeEditor::ColorSchemeEditor(QWidget* aParent)
             this, SLOT(wallpaperPathChanged(QString)));
 
     // color table
-    _ui->colorTable->setColumnCount(2);
-    _ui->colorTable->setRowCount(TABLE_COLORS);
+    _ui->colorTable->setColumnCount(3);
+    _ui->colorTable->setRowCount(COLOR_TABLE_ROW_LENGTH);
 
     QStringList labels;
-    labels << i18nc("@label:listbox Column header text for color names", "Name") << i18nc("@label:listbox Column header text for the actual colors", "Color");
+    labels << i18nc("@label:listbox Column header text for color names", "Name")
+           << i18nc("@label:listbox Column header text for the actual colors", "Color")
+           << i18nc("@label:listbox Column header text for the actual intense colors", "Intense color");
     _ui->colorTable->setHorizontalHeaderLabels(labels);
 
-    _ui->colorTable->horizontalHeader()->setStretchLastSection(true);
+    // Set resize mode for colorTable columns
+    _ui->colorTable->horizontalHeader()->setResizeMode(NAME_COLUMN, QHeaderView::ResizeToContents);
+    _ui->colorTable->horizontalHeader()->setResizeMode(COLOR_COLUMN, QHeaderView::Stretch);
+    _ui->colorTable->horizontalHeader()->setResizeMode(INTENSE_COLOR_COLUMN, QHeaderView::Stretch);
 
     QTableWidgetItem* item = new QTableWidgetItem("Test");
     _ui->colorTable->setItem(0, 0, item);
@@ -110,20 +130,26 @@ ColorSchemeEditor::~ColorSchemeEditor()
 }
 void ColorSchemeEditor::editColorItem(QTableWidgetItem* item)
 {
-    const int COLOR_COLUMN = 1;
-
     // ignore if this is not a color column
-    if (item->column() != COLOR_COLUMN)
+    if (item->column() != COLOR_COLUMN && item->column() != INTENSE_COLOR_COLUMN) {
         return;
+    }
 
     QColor color = item->background().color();
     int result = KColorDialog::getColor(color);
+
     if (result == KColorDialog::Accepted) {
         item->setBackground(color);
 
-        ColorEntry entry(_colors->colorEntry(item->row()));
+        int colorSchemeRow = item->row();
+        // Intense colors row are in the bottom half of the color table
+        if (item->column() == INTENSE_COLOR_COLUMN) {
+            colorSchemeRow += COLOR_TABLE_ROW_LENGTH;
+        }
+
+        ColorEntry entry(_colors->colorEntry(colorSchemeRow));
         entry.color = color;
-        _colors->setColorTableEntry(item->row(), entry);
+        _colors->setColorTableEntry(colorSchemeRow, entry);
 
         emit colorsChanged(_colors);
     }
@@ -167,11 +193,20 @@ void ColorSchemeEditor::setRandomizedBackgroundColor(bool randomize)
 {
     _colors->setRandomizedBackgroundColor(randomize);
 }
-void ColorSchemeEditor::setup(const ColorScheme* scheme)
+void ColorSchemeEditor::setup(const ColorScheme* scheme, bool isNewScheme)
 {
+    _isNewScheme = isNewScheme;
+
     delete _colors;
 
     _colors = new ColorScheme(*scheme);
+
+    if (_isNewScheme) {
+        setCaption(i18n("New Color Scheme"));
+        setDescription(i18n("New Color Scheme"));
+    } else {
+        setCaption(i18n("Edit Color Scheme"));
+    }
 
     // setup description edit
     _ui->descriptionEdit->setText(_colors->description());
@@ -195,7 +230,7 @@ void ColorSchemeEditor::setupColorTable(const ColorScheme* colors)
     ColorEntry table[TABLE_COLORS];
     colors->getColorTable(table);
 
-    for (int row = 0 ; row < TABLE_COLORS ; row++) {
+    for (int row = 0; row < COLOR_TABLE_ROW_LENGTH; row++) {
         QTableWidgetItem* nameItem = new QTableWidgetItem(ColorScheme::translatedColorNameForIndex(row));
         nameItem->setFlags(nameItem->flags() & ~Qt::ItemIsEditable);
 
@@ -204,16 +239,33 @@ void ColorSchemeEditor::setupColorTable(const ColorScheme* colors)
         colorItem->setFlags(colorItem->flags() & ~Qt::ItemIsEditable & ~Qt::ItemIsSelectable);
         colorItem->setToolTip(i18nc("@info:tooltip", "Click to choose color"));
 
-        _ui->colorTable->setItem(row, 0, nameItem);
-        _ui->colorTable->setItem(row, 1, colorItem);
-    }
+        QTableWidgetItem* colorItemIntense = new QTableWidgetItem();
+        colorItemIntense->setBackground(table[COLOR_TABLE_ROW_LENGTH + row].color);
+        colorItemIntense->setFlags(colorItem->flags() & ~Qt::ItemIsEditable & ~Qt::ItemIsSelectable);
+        colorItemIntense->setToolTip(i18nc("@info:tooltip", "Click to choose intense color"));
 
+        _ui->colorTable->setItem(row, NAME_COLUMN, nameItem);
+        _ui->colorTable->setItem(row, COLOR_COLUMN, colorItem);
+        _ui->colorTable->setItem(row, INTENSE_COLOR_COLUMN, colorItemIntense);
+    }
     // ensure that color names are as fully visible as possible
     _ui->colorTable->resizeColumnToContents(0);
+
+    // set the widget height to the table content
+    _ui->colorTable->setFixedHeight(_ui->colorTable->verticalHeader()->length() + _ui->colorTable->horizontalHeader()->height() + 2);
 }
-ColorScheme* ColorSchemeEditor::colorScheme() const
+
+ColorScheme& ColorSchemeEditor::colorScheme() const
 {
-    return _colors;
+    return *_colors;
+}
+bool ColorSchemeEditor::isNewScheme() const
+{
+    return _isNewScheme;
+}
+void ColorSchemeEditor::saveColorScheme()
+{
+    emit colorSchemeSaveRequested(colorScheme(), _isNewScheme);
 }
 
 #include "ColorSchemeEditor.moc"

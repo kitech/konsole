@@ -139,7 +139,7 @@ Profile::Ptr ProfileManager::loadProfile(const QString& shortPath)
     if (!fileInfo.isAbsolute())
         path = KStandardDirs::locate("data", path);
 
-    // if the file is not found, return imediately
+    // if the file is not found, return immediately
     if (path.isEmpty()) {
         return Profile::Ptr();
     }
@@ -159,8 +159,9 @@ Profile::Ptr ProfileManager::loadProfile(const QString& shortPath)
     if (recursionGuard.contains(path)) {
         kWarning() << "Ignoring attempt to load profile recursively from" << path;
         return _fallbackProfile;
-    } else
+    } else {
         recursionGuard.push(path);
+    }
 
     // load the profile
     ProfileReader* reader = new KDE4ProfileReader;
@@ -547,7 +548,7 @@ void ProfileManager::loadFavorites()
         favoriteSet << "Shell.profile";
     }
 
-    // look for favorites amongst those already loaded
+    // look for favorites among those already loaded
     foreach(const Profile::Ptr& profile, _profiles) {
         const QString& path = profile->path();
         if (favoriteSet.contains(path)) {

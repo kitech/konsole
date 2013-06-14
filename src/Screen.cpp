@@ -61,6 +61,7 @@ Screen::Screen(int lines, int columns):
     _lines(lines),
     _columns(columns),
     _screenLines(new ImageLine[_lines + 1]),
+    _screenLinesSize(_lines),
     _scrolledLines(0),
     _droppedLines(0),
     _history(new HistoryScrollNone()),
@@ -315,6 +316,7 @@ void Screen::resizeImage(int new_lines, int new_columns)
 
     delete[] _screenLines;
     _screenLines = newScreenLines;
+    _screenLinesSize = new_lines;
 
     _lines = new_lines;
     _columns = new_columns;
@@ -364,7 +366,7 @@ void Screen::setDefaultMargins()
    is to poor to distinguish between bold
    (which is a font attribute) and intensive
    (which is a color attribute), we translate
-   this and RE_BOLD in falls eventually appart
+   this and RE_BOLD in falls eventually apart
    into RE_BOLD and RE_INTENSIVE.
    */
 
@@ -509,7 +511,7 @@ void Screen::reset(bool clearScreen)
     saveMode(MODE_Wrap);      // wrap at end of margin
 
     resetMode(MODE_Origin);
-    saveMode(MODE_Origin);  // position refere to [1,1]
+    saveMode(MODE_Origin);  // position refer to [1,1]
 
     resetMode(MODE_Insert);
     saveMode(MODE_Insert);  // overstroke
@@ -591,7 +593,7 @@ void Screen::initTabStops()
 {
     _tabStops.resize(_columns);
 
-    // Arrg! The 1st tabstop has to be one longer than the other.
+    // The 1st tabstop has to be one longer than the other.
     // i.e. the kids start counting from 0 instead of 1.
     // Other programs might behave correctly. Be aware.
     for (int i = 0; i < _columns; i++)
@@ -679,8 +681,9 @@ void Screen::displayCharacter(unsigned short c)
         if (getMode(MODE_Wrap)) {
             _lineProperties[_cuY] = (LineProperty)(_lineProperties[_cuY] | LINE_WRAPPED);
             nextLine();
-        } else
+        } else {
             _cuX = _columns - w;
+        }
     }
 
     // ensure current line vector has enough elements
@@ -1182,7 +1185,7 @@ int Screen::copyLineToStream(int line ,
                              bool trimTrailingSpaces) const
 {
     //buffer to hold characters for decoding
-    //the buffer is static to avoid initialising every
+    //the buffer is static to avoid initializing every
     //element on each call to copyLineToStream
     //(which is unnecessary since all elements will be overwritten anyway)
     static const int MAX_CHARS = 1024;
@@ -1223,7 +1226,11 @@ int Screen::copyLineToStream(int line ,
 
         Q_ASSERT(count >= 0);
 
-        const int screenLine = line - _history->getLines();
+        int screenLine = line - _history->getLines();
+
+        Q_ASSERT(screenLine <= _screenLinesSize);
+
+        screenLine = qMin(screenLine, _screenLinesSize);
 
         Character* data = _screenLines[screenLine].data();
         int length = _screenLines[screenLine].count();
@@ -1315,9 +1322,9 @@ void Screen::addHistLine()
             if (_selBottomRight < top_BR)
                 _selBottomRight -= _columns;
 
-            if (_selBottomRight < 0)
+            if (_selBottomRight < 0) {
                 clearSelection();
-            else {
+            } else {
                 if (_selTopLeft < 0)
                     _selTopLeft = 0;
             }
@@ -1339,9 +1346,9 @@ void Screen::setScroll(const HistoryType& t , bool copyPreviousScroll)
 {
     clearSelection();
 
-    if (copyPreviousScroll)
+    if (copyPreviousScroll) {
         _history = t.scroll(_history);
-    else {
+    } else {
         HistoryScroll* oldScroll = _history;
         _history = t.scroll(0);
         delete oldScroll;

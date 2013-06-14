@@ -29,7 +29,7 @@
 #include <KCmdLineArgs>
 #include <KLocale>
 
-#define KONSOLE_VERSION "2.10.2"
+#define KONSOLE_VERSION "2.11"
 
 using Konsole::Application;
 
@@ -88,7 +88,7 @@ extern "C" int KDE_EXPORT kdemain(int argc, char** argv)
 bool shouldUseNewProcess()
 {
     // The "unique process" model of konsole is incompatible with some or all
-    // Qt/KDE options. When those incompatile options are given, konsole must
+    // Qt/KDE options. When those incompatible options are given, konsole must
     // use new process
     //
     // TODO: make sure the existing list is OK and add more incompatible options.
@@ -154,41 +154,41 @@ bool shouldUseNewProcess()
 void fillCommandLineOptions(KCmdLineOptions& options)
 {
     options.add("profile <name>",
-                ki18n("Name of profile to use for new Konsole instance"));
+                ki18nc("@info:shell", "Name of profile to use for new Konsole instance"));
+    options.add("fallback-profile",
+                ki18nc("@info:shell", "Use the internal FALLBACK profile"));
     options.add("workdir <dir>",
-                ki18n("Set the initial working directory of the new tab or"
+                ki18nc("@info:shell", "Set the initial working directory of the new tab or"
                       " window to 'dir'"));
     options.add("hold");
     options.add("noclose",
-                ki18n("Do not close the initial session automatically when it"
+                ki18nc("@info:shell", "Do not close the initial session automatically when it"
                       " ends."));
     options.add("new-tab",
-                ki18n("Create a new tab in an existing window rather than"
+                ki18nc("@info:shell", "Create a new tab in an existing window rather than"
                       " creating a new window"));
     options.add("tabs-from-file <file>",
-                ki18n("Create tabs as specified in given tabs configuration"
+                ki18nc("@info:shell", "Create tabs as specified in given tabs configuration"
                       " file"));
-    options.add("background-mode",
-                ki18n("Start Konsole in the background and bring to the front"
-                      " when Ctrl+Shift+F12 (by default) is pressed"));
-    options.add("show-menubar", ki18n("Show the menubar, overriding the default setting"));
-    options.add("hide-menubar", ki18n("Hide the menubar, overriding the default setting"));
-    options.add("show-tabbar", ki18n("Show the tabbar, overriding the default setting"));
-    options.add("hide-tabbar", ki18n("Hide the tabbar, overriding the default setting"));
+    options.add("show-menubar", ki18nc("@info:shell", "Show the menubar, overriding the default setting"));
+    options.add("hide-menubar", ki18nc("@info:shell", "Hide the menubar, overriding the default setting"));
+    options.add("show-tabbar", ki18nc("@info:shell", "Show the tabbar, overriding the default setting"));
+    options.add("hide-tabbar", ki18nc("@info:shell", "Hide the tabbar, overriding the default setting"));
+    options.add("fullscreen", ki18nc("@info:shell", "Start Konsole in fullscreen mode"));
     options.add("notransparency",
-                ki18n("Disable transparent backgrounds, even if the system"
+                ki18nc("@info:shell", "Disable transparent backgrounds, even if the system"
                       " supports them."));
-    options.add("list-profiles", ki18n("List the available profiles"));
+    options.add("list-profiles", ki18nc("@info:shell", "List the available profiles"));
     options.add("list-profile-properties",
-                ki18n("List all the profile properties names and their type"
+                ki18nc("@info:shell", "List all the profile properties names and their type"
                       " (for use with -p)"));
     options.add("p <property=value>",
-                ki18n("Change the value of a profile property."));
+                ki18nc("@info:shell", "Change the value of a profile property."));
     options.add("!e <cmd>",
-                ki18n("Command to execute. This option will catch all following"
+                ki18nc("@info:shell", "Command to execute. This option will catch all following"
                       " arguments, so use it as the last option."));
-    options.add("+[args]", ki18n("Arguments passed to command"));
-    options.add("", ki18n("Use --nofork to run in the foreground (helpful"
+    options.add("+[args]", ki18nc("@info:shell", "Arguments passed to command"));
+    options.add("", ki18nc("@info:shell", "Use --nofork to run in the foreground (helpful"
                           " with the -e option)."));
 }
 
