@@ -87,6 +87,7 @@ const Profile::PropertyInfo Profile::DefaultPropertyNames[] = {
     , { HistoryMode , "HistoryMode" , SCROLLING_GROUP , QVariant::Int }
     , { HistorySize , "HistorySize" , SCROLLING_GROUP , QVariant::Int }
     , { ScrollBarPosition , "ScrollBarPosition" , SCROLLING_GROUP , QVariant::Int }
+    , { ScrollFullPage , "ScrollFullPage" , SCROLLING_GROUP , QVariant::Bool }
 
     // Terminal Features
     , { BlinkingTextEnabled , "BlinkingTextEnabled" , TERMINAL_GROUP , QVariant::Bool }
@@ -111,6 +112,7 @@ const Profile::PropertyInfo Profile::DefaultPropertyNames[] = {
     , { PasteFromSelectionEnabled , "PasteFromSelectionEnabled" , INTERACTION_GROUP , QVariant::Bool }
     , { PasteFromClipboardEnabled , "PasteFromClipboardEnabled" , INTERACTION_GROUP , QVariant::Bool }
     , { MiddleClickPasteMode, "MiddleClickPasteMode" , INTERACTION_GROUP , QVariant::Int }
+    , { MouseWheelZoomEnabled, "MouseWheelZoomEnabled", INTERACTION_GROUP, QVariant::Bool }
 
     // Encoding
     , { DefaultEncoding , "DefaultEncoding" , ENCODING_GROUP , QVariant::String }
@@ -159,6 +161,7 @@ FallbackProfile::FallbackProfile()
     setProperty(SilenceSeconds, 10);
     setProperty(TerminalColumns, 80);
     setProperty(TerminalRows, 40);
+    setProperty(MouseWheelZoomEnabled, true);
 
     setProperty(KeyBindings, "default");
     setProperty(ColorScheme, "Linux"); //use DarkPastels when is start support blue ncurses UI properly
@@ -167,6 +170,7 @@ FallbackProfile::FallbackProfile()
     setProperty(HistoryMode, Enum::FixedSizeHistory);
     setProperty(HistorySize, 1000);
     setProperty(ScrollBarPosition, Enum::ScrollBarRight);
+    setProperty(ScrollFullPage, false);
 
     setProperty(FlowControlEnabled, true);
     setProperty(BlinkingTextEnabled, true);

@@ -1,13 +1,14 @@
-find_package(LibKonq)
-macro_log_feature(LIBKONQ_FOUND "LibKonq" "libkonq is a construction kit for a file manager. It comes from kde-baseapps." "http://www.kde.org" TRUE)
+# cmake-options : -WITH_LibKonq=ON or OFF; default is ON
+macro_optional_find_package(LibKonq)
+macro_bool_to_01(LIBKONQ_FOUND HAVE_LIBKONQ)
 
-if(LIBKONQ_FOUND)
-  include_directories(${LIBKONQ_INCLUDE_DIR})
+macro_log_feature(LIBKONQ_FOUND "LibKonq" "libkonq is a construction kit for a file manager. It comes from kde-baseapps." "http://www.kde.org" FALSE "" "Required for drag-n-drop menus")
+
+if(HAVE_LIBKONQ)
+   include_directories(${LIBKONQ_INCLUDE_DIR})
 endif()
 
 include(CheckIncludeFiles)
-check_include_files("sys/proc.h"      HAVE_SYS_PROC_H)
-check_include_files("sys/proc_info.h" HAVE_SYS_PROC_INFO_H)
 
 configure_file(config-konsole.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config-konsole.h)
 
@@ -36,7 +37,7 @@ configure_file(config-konsole.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config-konsole
         #                   COMMAND ${CMAKE_CURRENT_BINARY_DIR}/fontembedder
         #                   ARGS ${CMAKE_SOURCE_DIR}/LineFont.src
         #                   DEPENDS ${CMAKE_SOURCE_DIR}/LineFont.src )
-     endif(KONSOLE_BUILD_FONTEMBEDDER OR KONSOLE_GENERATE_LINEFONT)
+     endif()
 
 ### Konsole source files shared between embedded terminal and main application
     # qdbuscpp2xml -m  Session.h -o org.kde.konsole.Session.xml
@@ -111,14 +112,17 @@ configure_file(config-konsole.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config-konsole
     )
 
     set(konsole_LIBS
-        ${LIBKONQ_LIBRARY}
         ${KDE4_KPTY_LIBS}
         ${KDE4_KIO_LIBS}
         ${KDE4_KNOTIFYCONFIG_LIBS}
         ${QT_QTXML_LIBRARY}
         ${X11_LIBRARIES}
     )
-
+    if(HAVE_LIBKONQ)
+        set(konsole_LIBS ${konsole_LIBS}
+            ${LIBKONQ_LIBRARY}
+        )
+    endif()
 
 ### Konsole Application
 

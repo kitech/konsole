@@ -218,6 +218,10 @@ SessionController::~SessionController()
         _view->setScreenWindow(0);
 
     _allControllers.remove(this);
+
+    if (!_editProfileDialog.isNull()) {
+        delete _editProfileDialog.data();
+    }
 }
 void SessionController::trackOutput(QKeyEvent* event)
 {
@@ -568,7 +572,11 @@ void SessionController::setupCommonActions()
 
     // Close Session
     action = collection->addAction("close-session", this, SLOT(closeSession()));
-    action->setText(i18n("&Close Tab"));
+    if (isKonsolePart())
+        action->setText(i18n("&Close Session"));
+    else
+        action->setText(i18n("&Close Tab"));
+
     action->setIcon(KIcon("tab-close"));
     action->setShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_W));
 
@@ -643,6 +651,13 @@ void SessionController::setupCommonActions()
     _findPreviousAction = KStandardAction::findPrev(this, SLOT(findPreviousInHistory()), collection);
     _findPreviousAction->setShortcut(QKeySequence());
     _findPreviousAction->setEnabled(false);
+
+    // Character Encoding
+    _codecAction = new KCodecAction(i18n("Set &Encoding"), this);
+    _codecAction->setIcon(KIcon("character-set"));
+    collection->addAction("set-encoding", _codecAction);
+    connect(_codecAction->menu(), SIGNAL(aboutToShow()), this, SLOT(updateCodecAction()));
+    connect(_codecAction, SIGNAL(triggered(QTextCodec*)), this, SLOT(changeCodec(QTextCodec*)));
 }
 
 void SessionController::setupExtraActions()
@@ -701,13 +716,6 @@ void SessionController::setupExtraActions()
     toggleAction->setShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_I));
     action = collection->addAction("monitor-silence", toggleAction);
     connect(action, SIGNAL(toggled(bool)), this, SLOT(monitorSilence(bool)));
-
-    // Character Encoding
-    _codecAction = new KCodecAction(i18n("Set &Encoding"), this);
-    _codecAction->setIcon(KIcon("character-set"));
-    collection->addAction("set-encoding", _codecAction);
-    connect(_codecAction->menu(), SIGNAL(aboutToShow()), this, SLOT(updateCodecAction()));
-    connect(_codecAction, SIGNAL(triggered(QTextCodec*)), this, SLOT(changeCodec(QTextCodec*)));
 
     // Text Size
     action = collection->addAction("enlarge-font", this, SLOT(increaseFontSize()));
@@ -798,12 +806,31 @@ void SessionController::changeCodec(QTextCodec* codec)
     _session->setCodec(codec);
 }
 
+EditProfileDialog* SessionController::profileDialogPointer()
+{
+    return _editProfileDialog.data();
+}
+
 void SessionController::editCurrentProfile()
 {
-    EditProfileDialog* dialog = new EditProfileDialog(QApplication::activeWindow());
+    // Searching for Edit profile dialog opened with the same profile
+    foreach (SessionController* session, _allControllers.values()) {
+        if (session->profileDialogPointer()
+                && session->profileDialogPointer()->isVisible()
+                && session->profileDialogPointer()->lookupProfile() == SessionManager::instance()->sessionProfile(_session)) {
+            session->profileDialogPointer()->close();
+        }
+    }
 
-    dialog->setProfile(SessionManager::instance()->sessionProfile(_session));
-    dialog->show();
+    // NOTE bug311270: For to prevent the crash, the profile must be reset.
+    if (!_editProfileDialog.isNull()) {
+        // exists but not visible
+        delete _editProfileDialog.data();
+    }
+
+    _editProfileDialog = new EditProfileDialog(QApplication::activeWindow());
+    _editProfileDialog.data()->setProfile(SessionManager::instance()->sessionProfile(_session));
+    _editProfileDialog.data()->show();
 }
 
 void SessionController::renameSession()
@@ -1113,20 +1140,21 @@ void SessionController::enableSearchBar(bool showSearchBar)
         return;
     _searchBar->setVisible(showSearchBar);
     if (showSearchBar) {
+        _searchBar->clearLineEdit();
+        _searchBar->setSearchText(_searchText);
         connect(_searchBar, SIGNAL(searchChanged(QString)), this,
                 SLOT(searchTextChanged(QString)));
         connect(_searchBar, SIGNAL(searchReturnPressed(QString)), this,
-                SLOT(searchTextChanged(QString)));
-        connect(_searchBar, SIGNAL(searchShiftPlusReturnPressed()), this,
                 SLOT(findPreviousInHistory()));
-        _searchBar->clearLineEdit();
+        connect(_searchBar, SIGNAL(searchShiftPlusReturnPressed()), this,
+                SLOT(findNextInHistory()));
     } else {
         disconnect(_searchBar, SIGNAL(searchChanged(QString)), this,
                    SLOT(searchTextChanged(QString)));
         disconnect(_searchBar, SIGNAL(searchReturnPressed(QString)), this,
-                   SLOT(searchTextChanged(QString)));
-        disconnect(_searchBar, SIGNAL(searchShiftPlusReturnPressed()), this,
                    SLOT(findPreviousInHistory()));
+        disconnect(_searchBar, SIGNAL(searchShiftPlusReturnPressed()), this,
+                   SLOT(findNextInHistory()));
     }
 }
 
@@ -1170,12 +1198,17 @@ void SessionController::searchTextChanged(const QString& text)
 {
     Q_ASSERT(_view->screenWindow());
 
+    if (_searchText == text)
+        return;
+
+    _searchText = text;
+
     if (text.isEmpty())
         _view->screenWindow()->clearSelection();
 
     // update search.  this is called even when the text is
     // empty to clear the view's filters
-    beginSearch(text , SearchHistoryTask::ForwardsSearch);
+    beginSearch(text , SearchHistoryTask::BackwardsSearch);
 }
 void SessionController::searchCompleted(bool success)
 {
@@ -1244,7 +1277,7 @@ void SessionController::changeSearchMatch()
 
     // reset Selection for new case match
     _view->screenWindow()->clearSelection();
-    beginSearch(_searchBar->searchText(), SearchHistoryTask::ForwardsSearch);
+    beginSearch(_searchBar->searchText(), SearchHistoryTask::BackwardsSearch);
 }
 void SessionController::showHistoryOptions()
 {
@@ -1310,8 +1343,8 @@ void SessionController::print_screen()
     KConfigGroup configGroup(KGlobal::config(), "PrintOptions");
 
     if (configGroup.readEntry("ScaleOutput", true)) {
-        double scale = qMin(printer.pageRect().width() / double(_view->width()),
-                            printer.pageRect().height() / double(_view->height()));
+        double scale = qMin(printer.pageRect().width() / static_cast<double>(_view->width()),
+                            printer.pageRect().height() / static_cast<double>(_view->height()));
         painter.scale(scale, scale);
     }
 
@@ -1847,7 +1880,7 @@ void SearchHistoryTask::highlightResult(ScreenWindowPtr window , int findPos)
 
 SearchHistoryTask::SearchHistoryTask(QObject* parent)
     : SessionTask(parent)
-    , _direction(ForwardsSearch)
+    , _direction(BackwardsSearch)
 {
 }
 void SearchHistoryTask::setSearchDirection(SearchDirection direction)
