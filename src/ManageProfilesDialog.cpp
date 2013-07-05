@@ -32,10 +32,6 @@
 // Konsole
 #include "EditProfileDialog.h"
 #include "ProfileManager.h"
-#include "Session.h"
-#include "TerminalDisplay.h"
-#include "SessionManager.h"
-#include "SessionController.h"
 #include "ui_ManageProfilesDialog.h"
 
 using namespace Konsole;
@@ -178,7 +174,7 @@ void ManageProfilesDialog::updateItemsForProfile(const Profile::Ptr profile, QLi
     if (!profile->icon().isEmpty())
         items[ProfileNameColumn]->setIcon(KIcon(profile->icon()));
     items[ProfileNameColumn]->setData(QVariant::fromValue(profile), ProfileKeyRole);
-    items[ProfileNameColumn]->setToolTip(i18nc("@info:tooltip", "Click to rename profile"));
+    items[ProfileNameColumn]->setToolTip(i18n("Click to rename profile"));
 
     // Favorite Status
     const bool isFavorite = ProfileManager::instance()->findFavorites().contains(profile);
@@ -187,13 +183,13 @@ void ManageProfilesDialog::updateItemsForProfile(const Profile::Ptr profile, QLi
     else
         items[FavoriteStatusColumn]->setData(KIcon(), Qt::DecorationRole);
     items[FavoriteStatusColumn]->setData(QVariant::fromValue(profile), ProfileKeyRole);
-    items[FavoriteStatusColumn]->setToolTip(i18nc("@info:tooltip", "Click to toggle status"));
+    items[FavoriteStatusColumn]->setToolTip(i18n("Click to toggle status"));
 
     // Shortcut
     QString shortcut = ProfileManager::instance()->shortcut(profile).toString();
     items[ShortcutColumn]->setText(shortcut);
     items[ShortcutColumn]->setData(QVariant::fromValue(profile), ShortcutRole);
-    items[ShortcutColumn]->setToolTip(i18nc("@info:tooltip", "Double click to change shortcut"));
+    items[ShortcutColumn]->setToolTip(i18n("Double click to change shortcut"));
 }
 void ManageProfilesDialog::addItems(const Profile::Ptr profile)
 {
@@ -348,27 +344,10 @@ void ManageProfilesDialog::createProfile()
 }
 void ManageProfilesDialog::editSelected()
 {
-    QList<Profile::Ptr> profiles(selectedProfiles());
-
-    foreach (Session* session, SessionManager::instance()->sessions()) {
-         foreach (TerminalDisplay* terminal, session->views()) {
-             // Searching for opened profiles
-             if (terminal->sessionController()->profileDialogPointer() != NULL) {
-                 foreach (const Profile::Ptr & profile, profiles) {
-                     if (profile->name() == terminal->sessionController()->profileDialogPointer()->lookupProfile()->name()
-                         && terminal->sessionController()->profileDialogPointer()->isVisible()) {
-                         // close opened edit dialog
-                         terminal->sessionController()->profileDialogPointer()->close();
-                     }
-                 }
-             }
-         }
-    }
-
     EditProfileDialog dialog(this);
     // the dialog will delete the profile group when it is destroyed
     ProfileGroup* group = new ProfileGroup;
-    foreach (const Profile::Ptr & profile, profiles) {
+    foreach(const Profile::Ptr & profile, selectedProfiles()) {
         group->addProfile(profile);
     }
     group->updateValues();

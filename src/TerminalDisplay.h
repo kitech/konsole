@@ -51,6 +51,7 @@ namespace Konsole
 class FilterChain;
 class TerminalImageFilterChain;
 class SessionController;
+
 /**
  * A widget which displays output from a terminal emulation and sends input keypresses and mouse activity
  * to the terminal.
@@ -103,9 +104,6 @@ public:
      * @param lines The maximum value of the scroll bar.
      */
     void setScroll(int cursor, int lines);
-
-    void setScrollFullPage(bool fullPage);
-    bool scrollFullPage() const;
 
     /**
      * Returns the display's filter chain.  When the image for the display is updated,
@@ -216,7 +214,6 @@ public:
     uint lineSpacing() const;
 
     void setSessionController(SessionController* controller);
-    SessionController* sessionController();
 
     /**
      * Sets the shape of the keyboard cursor.  This is the cursor drawn
@@ -336,22 +333,6 @@ public:
 
     /** Play a visual bell for prompt or warning. */
     void visualBell();
-
-    /**
-     * Specified whether zoom terminal on Ctrl+mousewheel  is enabled or not.
-     * Defaults to enabled.
-     */
-    void setMouseWheelZoom(bool value) {
-        _mouseWheelZoom = value;
-    };
-    /**
-     * Returns the whether zoom terminal on Ctrl+mousewheel is enabled.
-     *
-     * See setMouseWheelZoom()
-     */
-    bool mouseWheelZoom() {
-        return _mouseWheelZoom;
-    };
 
     /**
      * Reimplemented.  Has no effect.  Use setVTFont() to change the font
@@ -555,16 +536,6 @@ public slots:
      */
     void setForegroundColor(const QColor& color);
 
-    /**
-     * Sets the display's contents margins.
-     */
-    void setMargin(int margin);
-
-    /**
-     * Sets whether the contents are centered between the margins.
-     */
-    void setCenterContents(bool enable);
-
 signals:
 
     /**
@@ -619,7 +590,6 @@ protected:
     virtual void focusInEvent(QFocusEvent* event);
     virtual void focusOutEvent(QFocusEvent* event);
     virtual void keyPressEvent(QKeyEvent* event);
-    virtual void leaveEvent(QEvent* event);
     virtual void mouseDoubleClickEvent(QMouseEvent* event);
     virtual void mousePressEvent(QMouseEvent* event);
     virtual void mouseReleaseEvent(QMouseEvent* event);
@@ -670,7 +640,7 @@ private slots:
     void tripleClickTimeout();  // resets possibleTripleClick
 
     /**
-     * Called from the drag-and-drop popup. Causes the dropped URLs to be pasted as text.
+     * Called from the drag'n'drop popup. Causes the dropped URLs to be pasted as text.
      */
     void dropMenuPasteActionTriggered();
 
@@ -785,7 +755,8 @@ private:
     // than 'columns' if the character image provided with setImage() is smaller
     // than the maximum image size which can be displayed
 
-    QRect _contentRect;
+    int _contentHeight;
+    int _contentWidth;
     Character* _image; // [lines][columns]
     // only the area [usedLines][usedColumns] in the image contains valid data
 
@@ -814,14 +785,13 @@ private:
 
     QScrollBar* _scrollBar;
     Enum::ScrollBarPositionEnum _scrollbarLocation;
-    bool _scrollFullPage;
     QString     _wordCharacters;
     int         _bellMode;
 
     bool _allowBlinkingText;  // allow text to blink
     bool _allowBlinkingCursor;  // allow cursor to blink
-    bool _textBlinking;   // text is blinking, hide it when drawing
-    bool _cursorBlinking;     // cursor is blinking, hide it when drawing
+    bool _textBlinking;   // text is blinkingi, hide it when drawing
+    bool _cursorBlinking;     // cursor is blinking, hide it whe drawing
     bool _hasTextBlinker; // has characters to blink
     QTimer* _blinkTextTimer;
     QTimer* _blinkCursorTimer;
@@ -870,7 +840,7 @@ private:
     };
     InputMethodData _inputMethodData;
 
-    bool _antialiasText;   // do we anti-alias or not
+    bool _antialiasText;   // do we antialias or not
 
     bool _printerFriendly; // are we currently painting to a printer in black/white mode
 
@@ -880,13 +850,12 @@ private:
     //the duration of the size hint in milliseconds
     static const int SIZE_HINT_DURATION = 1000;
 
+    static const int DEFAULT_LEFT_MARGIN = 1;
+    static const int DEFAULT_TOP_MARGIN = 1;
+
     SessionController* _sessionController;
 
     bool _trimTrailingSpaces;   // trim trailing spaces in selected text
-    bool _mouseWheelZoom;   // enable mouse wheel zooming or not
-
-    int _margin;      // the contents margin
-    bool _centerContents;   // center the contents between margins
 
     friend class TerminalDisplayAccessible;
 };

@@ -50,7 +50,7 @@ using Konsole::Vt102Emulation;
    QT's iso mapping leaves 0x00..0x7f without any changes. But the graphicals
    come in here as proper unicode characters.
 
-   We treat non-iso10646 fonts as VT100 extended and do the required mapping
+   We treat non-iso10646 fonts as VT100 extended and do the requiered mapping
    from unicode to 0x00..0x1f. The remaining translation is then left to the
    QCodec.
 */
@@ -160,7 +160,7 @@ void Vt102Emulation::reset()
    The last two forms allow list of arguments. Since the elements of
    the lists are treated individually the same way, they are passed
    as individual tokens to the interpretation. Further, because the
-   meaning of the parameters are names (although represented as numbers),
+   meaning of the parameters are names (althought represented as numbers),
    they are includes within the token ('N').
 
 */
@@ -435,7 +435,7 @@ void Vt102Emulation::updateTitle()
    meaning is assigned to them. These are either operations of
    the current _screen, or of the emulation class itself.
 
-   The token to be interpreted comes in as a machine word
+   The token to be interpreteted comes in as a machine word
    possibly accompanied by two parameters.
 
    Likewise, the operations assigned to, come with up to two
@@ -570,7 +570,6 @@ void Vt102Emulation::processToken(int token, int p, int q)
 
     case TY_CSI_PS('m',   0) : _currentScreen->setDefaultRendition  (          ); break;
     case TY_CSI_PS('m',   1) : _currentScreen->  setRendition     (RE_BOLD     ); break; //VT100
-    case TY_CSI_PS('m',   3) : _currentScreen->  setRendition     (RE_ITALIC   ); break; //VT100
     case TY_CSI_PS('m',   4) : _currentScreen->  setRendition     (RE_UNDERLINE); break; //VT100
     case TY_CSI_PS('m',   5) : _currentScreen->  setRendition     (RE_BLINK    ); break; //VT100
     case TY_CSI_PS('m',   7) : _currentScreen->  setRendition     (RE_REVERSE  ); break;
@@ -578,7 +577,6 @@ void Vt102Emulation::processToken(int token, int p, int q)
     case TY_CSI_PS('m',  11) : /* IGNORED: mapping related          */ break; //LINUX
     case TY_CSI_PS('m',  12) : /* IGNORED: mapping related          */ break; //LINUX
     case TY_CSI_PS('m',  22) : _currentScreen->resetRendition     (RE_BOLD     ); break;
-    case TY_CSI_PS('m',  23) : _currentScreen->resetRendition     (RE_ITALIC   ); break; //VT100
     case TY_CSI_PS('m',  24) : _currentScreen->resetRendition     (RE_UNDERLINE); break;
     case TY_CSI_PS('m',  25) : _currentScreen->resetRendition     (RE_BLINK    ); break;
     case TY_CSI_PS('m',  27) : _currentScreen->resetRendition     (RE_REVERSE  ); break;
@@ -857,7 +855,7 @@ void Vt102Emulation::reportTerminalType()
 
 void Vt102Emulation::reportSecondaryAttributes()
 {
-  // Secondary device attribute response (Request was: ^[[>0c or ^[[>c)
+  // Seconday device attribute response (Request was: ^[[>0c or ^[[>c)
   if (getMode(MODE_Ansi))
     sendString("\033[>0;115;0c"); // Why 115?  ;)
   else
@@ -990,7 +988,7 @@ void Vt102Emulation::sendKeyEvent(QKeyEvent* event)
         }
     }
 
-    // look up key binding
+    // lookup key binding
     if (_keyTranslator) {
         KeyboardTranslator::Entry entry = _keyTranslator->findEntry(
                                               event->key() ,
@@ -1186,7 +1184,7 @@ void Vt102Emulation::restoreCursor()
 void Vt102Emulation::resetModes()
 {
     // MODE_Allow132Columns is not reset here
-    // to match Xterm's behavior (see Xterm's VTReset() function)
+    // to match Xterm's behaviour (see Xterm's VTReset() function)
 
     resetMode(MODE_132Columns); saveMode(MODE_132Columns);
     resetMode(MODE_Mouse1000);  saveMode(MODE_Mouse1000);
@@ -1226,8 +1224,6 @@ void Vt102Emulation::setMode(int m)
         setScreen(1);
         break;
     }
-    // FIXME: Currently this has a redundant condition as MODES_SCREEN is 6
-    // and MODE_NewLine is 5
     if (m < MODES_SCREEN || m == MODE_NewLine) {
         _screen[0]->setMode(m);
         _screen[1]->setMode(m);
@@ -1254,8 +1250,6 @@ void Vt102Emulation::resetMode(int m)
         setScreen(0);
         break;
     }
-    // FIXME: Currently this has a redundant condition as MODES_SCREEN is 6
-    // and MODE_NewLine is 5
     if (m < MODES_SCREEN || m == MODE_NewLine) {
         _screen[0]->resetMode(m);
         _screen[1]->resetMode(m);

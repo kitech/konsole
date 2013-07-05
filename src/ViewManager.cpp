@@ -736,7 +736,7 @@ void ViewManager::viewDestroyed(QWidget* view)
         updateDetachViewState();
     }
     // The below causes the menus  to be messed up
-    // Only happens when using the tab bar close button
+    // Only happenss when using the tab bar close button
 //    if (_pluggedController)
 //        emit unplugController(_pluggedController);
 }
@@ -791,10 +791,7 @@ void ViewManager::applyProfileToView(TerminalDisplay* view , const Profile::Ptr 
     else if (scrollBarPosition == Enum::ScrollBarHidden)
         view->setScrollBarPosition(Enum::ScrollBarHidden);
 
-    bool scrollFullPage = profile->property<bool>(Profile::ScrollFullPage);
-    view->setScrollFullPage(scrollFullPage);
-
-    // show hint about terminal size after resizing
+    // show hint about termianl size after resizing
     view->setShowTerminalSizeHint(profile->showTerminalSizeHint());
 
     // terminal features
@@ -818,10 +815,6 @@ void ViewManager::applyProfileToView(TerminalDisplay* view , const Profile::Ptr 
         view->setMiddleClickPasteMode(Enum::PasteFromX11Selection);
     else if (middleClickPasteMode == Enum::PasteFromClipboard)
         view->setMiddleClickPasteMode(Enum::PasteFromClipboard);
-
-    // margin/center - these are hard-fixed ATM
-    view->setMargin(1);
-    view->setCenterContents(false);
 
     // cursor shape
     int cursorShape = profile->property<int>(Profile::CursorShape);
@@ -848,9 +841,6 @@ void ViewManager::applyProfileToView(TerminalDisplay* view , const Profile::Ptr 
 
     // bell mode
     view->setBellMode(profile->property<int>(Profile::BellMode));
-
-    // mouse wheel zoom
-    view->setMouseWheelZoom(profile->mouseWheelZoomEnabled());
 }
 
 void ViewManager::updateViewsForSession(Session* session)

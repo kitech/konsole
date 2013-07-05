@@ -112,7 +112,7 @@ ushort ExtendedCharTable::createExtendedChar(const ushort* unicodePoints , ushor
 
 ushort* ExtendedCharTable::lookupExtendedChar(ushort hash , ushort& length) const
 {
-    // look up index in table and if found, set the length
+    // lookup index in table and if found, set the length
     // argument and return a pointer to the character sequence
 
     ushort* buffer = extendedCharTable[hash];

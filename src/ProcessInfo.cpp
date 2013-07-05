@@ -48,6 +48,12 @@
 #if defined(Q_OS_MAC)
 #include <sys/sysctl.h>
 #include <libproc.h>
+#if defined(HAVE_SYS_PROC_INFO_H)
+#include <sys/proc_info.h>
+#endif
+#if defined(HAVE_SYS_PROC_H)
+#include <sys/proc.h>
+#endif
 #include <kde_file.h>
 #endif
 
@@ -484,13 +490,13 @@ private:
             while (pos < data.count()) {
                 QChar c = data[pos];
 
-                if (c == '(') {
+                if (c == '(')
                     stack++;
-                } else if (c == ')') {
+                else if (c == ')')
                     stack--;
-                } else if (stack == 0 && c == ' ') {
+                else if (stack == 0 && c == ' ')
                     field++;
-                } else {
+                else {
                     switch (field) {
                     case PARENT_PID_FIELD:
                         parentPidString.append(c);
@@ -676,7 +682,6 @@ private:
     }
 
     virtual bool readEnvironment(int aPid) {
-        Q_UNUSED(aPid);
         // Not supported in FreeBSD?
         return false;
     }

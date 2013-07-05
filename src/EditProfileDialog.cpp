@@ -69,7 +69,6 @@ EditProfileDialog::EditProfileDialog(QWidget* aParent)
     : KDialog(aParent)
     , _colorSchemeAnimationTimeLine(0)
     , _delayedPreviewTimer(new QTimer(this))
-    , _colorDialog(0)
 {
     setCaption(i18n("Edit Profile"));
     setButtons(KDialog::Ok | KDialog::Cancel | KDialog::Apply);
@@ -313,7 +312,7 @@ void EditProfileDialog::showEnvironmentEditor()
     QStringList currentEnvironment = profile->environment();
 
     edit->setPlainText(currentEnvironment.join("\n"));
-    edit->setToolTip(i18nc("@info:tooltip", "One environment variable per line"));
+    edit->setToolTip(i18n("One environment variable per line"));
 
     dialog.data()->setPlainCaption(i18n("Edit Environment"));
     dialog.data()->setMainWidget(edit);
@@ -472,9 +471,6 @@ void EditProfileDialog::setupAppearancePage(const Profile::Ptr profile)
     _ui->boldIntenseButton->setChecked(profile->boldIntense());
     connect(_ui->boldIntenseButton, SIGNAL(toggled(bool)), this,
             SLOT(setBoldIntense(bool)));
-    _ui->enableMouseWheelZoomButton->setChecked(profile->mouseWheelZoomEnabled());
-    connect(_ui->enableMouseWheelZoomButton, SIGNAL(toggled(bool)), this,
-            SLOT(toggleMouseWheelZoom(bool)));
 }
 void EditProfileDialog::setAntialiasText(bool enable)
 {
@@ -489,10 +485,6 @@ void EditProfileDialog::setBoldIntense(bool enable)
 {
     preview(Profile::BoldIntense, enable);
     updateTempProfileProperty(Profile::BoldIntense, enable);
-}
-void EditProfileDialog::toggleMouseWheelZoom(bool enable)
-{
-    updateTempProfileProperty(Profile::MouseWheelZoomEnabled, enable);
 }
 void EditProfileDialog::colorSchemeAnimationUpdate()
 {
@@ -686,8 +678,8 @@ void EditProfileDialog::removeColorScheme()
 }
 void EditProfileDialog::showColorSchemeEditor(bool isNewScheme)
 {
-    // Finding selected ColorScheme
     QModelIndexList selected = _ui->colorSchemeList->selectionModel()->selectedIndexes();
+
     QAbstractItemModel* model = _ui->colorSchemeList->model();
     const ColorScheme* colors = 0;
     if (!selected.isEmpty())
@@ -697,29 +689,34 @@ void EditProfileDialog::showColorSchemeEditor(bool isNewScheme)
 
     Q_ASSERT(colors);
 
-    // Setting up ColorSchemeEditor ui
-    // close any running ColorSchemeEditor
-    if (_colorDialog) {
-        closeColorSchemeEditor();
+    QWeakPointer<KDialog> dialog = new KDialog(this);
+
+    if (isNewScheme)
+        dialog.data()->setCaption(i18n("New Color Scheme"));
+    else
+        dialog.data()->setCaption(i18n("Edit Color Scheme"));
+
+    ColorSchemeEditor* editor = new ColorSchemeEditor;
+    dialog.data()->setMainWidget(editor);
+    editor->setup(colors);
+
+    if (isNewScheme)
+        editor->setDescription(i18n("New Color Scheme"));
+
+    if (dialog.data()->exec() == QDialog::Accepted) {
+        ColorScheme* newScheme = new ColorScheme(*editor->colorScheme());
+
+        // if this is a new color scheme, pick a name based on the description
+        if (isNewScheme)
+            newScheme->setName(newScheme->description());
+
+        ColorSchemeManager::instance()->addColorScheme(newScheme);
+
+        updateColorSchemeList(true);
+
+        preview(Profile::ColorScheme, newScheme->name());
     }
-    _colorDialog = new ColorSchemeEditor(this);
-
-    connect(_colorDialog, SIGNAL(colorSchemeSaveRequested(ColorScheme,bool)),
-            this, SLOT(saveColorScheme(ColorScheme,bool)));
-    _colorDialog->setup(colors, isNewScheme);
-
-    // Hide the parent dialog while ColorScheme is open
-    this->hide();
-    connect(_colorDialog, SIGNAL(finished()), this, SLOT(show()));
-
-    _colorDialog->show();
-}
-void EditProfileDialog::closeColorSchemeEditor()
-{
-    if (_colorDialog) {
-        _colorDialog->close();
-        delete _colorDialog;
-    }
+    delete dialog.data();
 }
 void EditProfileDialog::newColorScheme()
 {
@@ -728,21 +725,6 @@ void EditProfileDialog::newColorScheme()
 void EditProfileDialog::editColorScheme()
 {
     showColorSchemeEditor(false);
-}
-void EditProfileDialog::saveColorScheme(const ColorScheme& scheme, bool isNewScheme)
-{
-    ColorScheme* newScheme = new ColorScheme(scheme);
-
-    // if this is a new color scheme, pick a name based on the description
-    if (isNewScheme) {
-        newScheme->setName(newScheme->description());
-    }
-
-    ColorSchemeManager::instance()->addColorScheme(newScheme);
-
-    updateColorSchemeList(true);
-
-    preview(Profile::ColorScheme, newScheme->name());
 }
 void EditProfileDialog::colorSchemeSelected()
 {
@@ -819,8 +801,8 @@ void EditProfileDialog::updateButtonApply()
         QVariant value = iter.value();
 
         // for previewed property
-        if (_previewedProperties.contains(static_cast<int>(aProperty))) {
-            if (value != _previewedProperties.value(static_cast<int>(aProperty))) {
+        if (_previewedProperties.contains(int(aProperty))) {
+            if (value != _previewedProperties.value(int(aProperty))) {
                 userModified = true;
                 break;
             }
@@ -977,17 +959,6 @@ void EditProfileDialog::setupScrollingPage(const Profile::Ptr profile)
     const int historySize = profile->historySize();
     _ui->historySizeWidget->setLineCount(historySize);
 
-    // setup scrollpageamount type radio
-    int scrollFullPage = profile->property<int>(Profile::ScrollFullPage);
-
-    RadioOption pageamounts[] = {
-        {_ui->scrollHalfPage, Enum::ScrollPageHalf, SLOT(scrollHalfPage())},
-        {_ui->scrollFullPage, Enum::ScrollPageFull, SLOT(scrollFullPage())},
-        {0, 0, 0}
-    };
-
-    setupRadio(pageamounts, scrollFullPage);
-
     // signals and slots
     connect(_ui->historySizeWidget, SIGNAL(historySizeChanged(int)),
             this, SLOT(historySizeChanged(int)));
@@ -1012,14 +983,6 @@ void EditProfileDialog::showScrollBarLeft()
 void EditProfileDialog::showScrollBarRight()
 {
     updateTempProfileProperty(Profile::ScrollBarPosition, Enum::ScrollBarRight);
-}
-void EditProfileDialog::scrollFullPage()
-{
-    updateTempProfileProperty(Profile::ScrollFullPage, Enum::ScrollPageFull);
-}
-void EditProfileDialog::scrollHalfPage()
-{
-    updateTempProfileProperty(Profile::ScrollFullPage, Enum::ScrollPageHalf);
 }
 void EditProfileDialog::setupMousePage(const Profile::Ptr profile)
 {
@@ -1069,10 +1032,6 @@ void EditProfileDialog::setupMousePage(const Profile::Ptr profile)
             SLOT(TripleClickModeChanged(int)));
 
     _ui->openLinksByDirectClickButton->setEnabled(_ui->underlineLinksButton->isChecked());
-
-    _ui->enableMouseWheelZoomButton->setChecked(profile->mouseWheelZoomEnabled());
-    connect(_ui->enableMouseWheelZoomButton, SIGNAL(toggled(bool)), this,
-            SLOT(toggleMouseWheelZoom(bool)));
 }
 void EditProfileDialog::setupAdvancedPage(const Profile::Ptr profile)
 {
@@ -1394,7 +1353,7 @@ QSize ColorSchemeViewDelegate::sizeHint(const QStyleOptionViewItem& option,
     qreal heightForWidth = (colorWidth * 2) + option.fontMetrics.height() + margin;
 
     // temporary
-    return QSize(width, static_cast<int>(heightForWidth));
+    return QSize(width, (int)heightForWidth);
 }
 
 #include "EditProfileDialog.moc"

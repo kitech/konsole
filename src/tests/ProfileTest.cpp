@@ -25,7 +25,6 @@
 
 // Konsole
 #include "../Profile.h"
-#include "../ProfileWriter.h"
 
 using namespace Konsole;
 
@@ -154,7 +153,7 @@ void ProfileTest::testProfileGroup()
     QCOMPARE(profile[0]->property<QString>(Profile::Command), QString("ssh"));
     QVERIFY(profile[1]->property<bool>(Profile::AntiAliasFonts) == false);
 
-    // set and test non-shareable properties in the group
+    // set and test non-sharable properties in the group
     // (should have no effect)
     group->setProperty(Profile::Name, "NewName");
     group->setProperty(Profile::Path, "NewPath");
@@ -169,47 +168,6 @@ void ProfileTest::testProfileGroup()
     // check that profile is no longer affected by group
     group->setProperty(Profile::Command, "fish");
     QVERIFY(profile[0]->property<QString>(Profile::Command) != "fish");
-}
-
-// Verify the correct file name is created from the untranslatedname
-void ProfileTest::testProfileFileNames()
-{
-    Profile::Ptr profile = Profile::Ptr(new Profile);
-    QFileInfo fileInfo;
-    ProfileWriter* writer = new KDE4ProfileWriter;
-  
-    profile->setProperty(Profile::UntranslatedName, "Indiana");
-    fileInfo.setFile(writer->getPath(profile));
-    QCOMPARE(fileInfo.fileName(), QString("Indiana.profile"));
-
-    profile->setProperty(Profile::UntranslatedName, "Old Paris");
-    fileInfo.setFile(writer->getPath(profile));
-    QCOMPARE(fileInfo.fileName(), QString("Old Paris.profile"));
-
-    /* FIXME: deal w/ file systems that are case-insensitive
-       This leads to confusion as both Test and test can appear in the Manager
-       Profile dialog while really there is only 1 test.profile file.
-       Suggestions:  all lowercase, testing the file system, ...
-    */
-    /*
-    profile->setProperty(Profile::UntranslatedName, "New Profile");
-    fileInfo.setFile(writer->getPath(profile));
-    QCOMPARE(fileInfo.fileName(), QString("new profile.profile"));
-    */
-    
-    /* FIXME: don't allow certain characters in file names
-       Consider: ,^@=+{}[]~!?:&*\"|#%<>$\"'();`'/\ 
-       Suggestions: changing them all to _, just remove them, ...
-       Bug 315086 comes from an user using / in the profile name - multiple
-         issues there.
-    */
-    /*
-    profile->setProperty(Profile::UntranslatedName, "new/profile");
-    fileInfo.setFile(writer->getPath(profile));
-    QCOMPARE(fileInfo.fileName(), QString("new_profile.profile"));
-    */
-
-    delete writer;
 }
 
 QTEST_KDEMAIN_CORE(ProfileTest)

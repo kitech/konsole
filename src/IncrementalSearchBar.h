@@ -93,8 +93,6 @@ public:
     /** Returns the current search text */
     QString searchText();
 
-    void setSearchText(const QString& text);
-
     // reimplemented
     virtual void setVisible(bool visible);
 signals:
@@ -136,6 +134,8 @@ private slots:
     void notifySearchChanged();
 
 private:
+    bool _foundMatch;
+
     KLineEdit* _searchEdit;
     QAction* _caseSensitive;
     QAction* _regExpression;

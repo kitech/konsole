@@ -287,7 +287,7 @@ public:
     void setForeColor(int space, int color);
     /**
      * Sets the cursor's background color.
-     * @param space The color space used by the @p color argument.
+     * @param space The color space used by the @p color argumnet.
      * @param color The new background color.  The meaning of this depends on
      * the color @p space used.
      *
@@ -450,9 +450,7 @@ public:
     QString selectedText(bool preserveLineBreaks, bool trimTrailingSpaces = false) const;
 
     /**
-     * Convenience method.  Returns the text between two indices.
-     * @param startIndex Specifies the starting text index
-     * @param endIndex Specifies the ending text index
+     * Convenience method.  Returns the text from @p startIndex to @p endIndex.
      * @param preserveLineBreaks Specifies whether new line characters should
      * be inserted into the returned text at the end of each terminal line.
      * @param trimTrailingSpaces Specifies whether trailing spaces should be
@@ -476,8 +474,6 @@ public:
      * @param decoder A decoder which converts terminal characters into text.
      * PlainTextDecoder is the most commonly used decoder which converts characters
      * into plain text with no formatting.
-     * @param preserveLineBreaks Specifies whether new line characters should
-     * be inserted into the returned text at the end of each terminal line.
      * @param trimTrailingSpaces Specifies whether trailing spaces should be
      * trimmed in the returned text.
      */

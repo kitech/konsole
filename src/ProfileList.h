@@ -66,7 +66,7 @@ public:
     /**
      * Returns a list of actions representing profiles
      *
-     * The user-data associated with each action is the corresponding profile
+     * The user-data associated with each action is the corresonding profile
      */
     QList<QAction*> actions();
 

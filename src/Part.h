@@ -83,7 +83,7 @@ public slots:
     void createSession(const QString& profileName = QString(), const QString& directory = QString());
 
     /**
-     * Returns a list of names of all available profiles
+     * Returns a list of names of all available proifles
      *
      * This is highly experimental. Do not use it at the moment
      */

@@ -309,6 +309,15 @@ void ColorScheme::readColorEntry(const KConfig& config , int index)
 
     entry.color = configGroup.readEntry("Color", QColor());
 
+    // Deprecated key from KDE 4.0 which set 'Bold' to true to force
+    // a color to be bold or false to use the current format
+    //
+    // TODO - Add a new tri-state key which allows for bold, normal or
+    // current format
+    if (configGroup.hasKey("Bold"))
+        entry.fontWeight = configGroup.readEntry("Bold", false) ? ColorEntry::Bold :
+                           ColorEntry::UseCurrentFormat;
+
     setColorTableEntry(index , entry);
 
     const quint16 hue = configGroup.readEntry("MaxRandomHue", 0);
@@ -339,16 +348,14 @@ void ColorScheme::writeColorEntry(KConfig& config , int index) const
     const ColorEntry& entry = colorTable()[index];
 
     configGroup.writeEntry("Color", entry.color);
-
-    // Remove unused keys
     if (configGroup.hasKey("Transparent")) {
         configGroup.deleteEntry("Transparent");
     }
     if (configGroup.hasKey("Transparency")) {
         configGroup.deleteEntry("Transparency");
     }
-    if (configGroup.hasKey("Bold")) {
-        configGroup.deleteEntry("Bold");
+    if (entry.fontWeight != ColorEntry::UseCurrentFormat) {
+        configGroup.writeEntry("Bold", entry.fontWeight == ColorEntry::Bold);
     }
 
     RandomizationRange random = _randomTable != 0 ? _randomTable[index] : RandomizationRange();
@@ -356,9 +363,9 @@ void ColorScheme::writeColorEntry(KConfig& config , int index) const
     // record randomization if this color has randomization or
     // if one of the keys already exists
     if (!random.isNull() || configGroup.hasKey("MaxRandomHue")) {
-        configGroup.writeEntry("MaxRandomHue", static_cast<int>(random.hue));
-        configGroup.writeEntry("MaxRandomValue", static_cast<int>(random.value));
-        configGroup.writeEntry("MaxRandomSaturation", static_cast<int>(random.saturation));
+        configGroup.writeEntry("MaxRandomHue", (int)random.hue);
+        configGroup.writeEntry("MaxRandomValue", (int)random.value);
+        configGroup.writeEntry("MaxRandomSaturation", (int)random.saturation);
     }
 }
 

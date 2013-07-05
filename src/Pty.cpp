@@ -148,8 +148,6 @@ void Pty::setUtf8Mode(bool enable)
         if (!pty()->tcSetAttr(&ttmode))
             kWarning() << "Unable to set terminal attributes.";
     }
-#else
-    Q_UNUSED(enable);
 #endif
 }
 

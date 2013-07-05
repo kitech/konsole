@@ -212,11 +212,10 @@ bool KeyboardTranslatorReader::decodeSequence(const QString& text,
 
                 if (isWanted)
                     tempFlags |= itemFlag;
-            } else if (parseAsKeyCode(buffer, itemKeyCode)) {
+            } else if (parseAsKeyCode(buffer, itemKeyCode))
                 keyCode = itemKeyCode;
-            } else {
+            else
                 kWarning() << "Unable to parse key binding item:" << buffer;
-            }
 
             buffer.clear();
         }
@@ -283,13 +282,12 @@ bool KeyboardTranslatorReader::parseAsKeyCode(const QString& item , int& keyCode
             kWarning() << "Unhandled key codes in sequence: " << item;
         }
         // additional cases implemented for backwards compatibility with KDE 3
-    } else if (item == "prior") { // TODO: remove it in the future
+    } else if (item == "prior")  // TODO: remove it in the future
         keyCode = Qt::Key_PageUp;
-    } else if (item == "next") {   // TODO: remove it in the future
+    else if (item == "next")     // TODO: remove it in the future
         keyCode = Qt::Key_PageDown;
-    } else {
+    else
         return false;
-    }
 
     return true;
 }
@@ -512,9 +510,9 @@ QByteArray KeyboardTranslator::Entry::unescape(const QByteArray& input) const
                     hexDigits[1] = result[i + 3];
 
                 unsigned charValue = 0;
-                sscanf(hexDigits, "%2x", &charValue);
+                sscanf(hexDigits, "%x", &charValue);
 
-                replacement[0] = static_cast<char>(charValue);
+                replacement[0] = (char)charValue;
                 charsToRemove = 2 + qstrlen(hexDigits);
             }
             break;

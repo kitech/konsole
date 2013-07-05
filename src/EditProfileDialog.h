@@ -31,8 +31,6 @@
 // Konsole
 #include "Profile.h"
 #include "Enumeration.h"
-#include "ColorScheme.h"
-#include "ColorSchemeEditor.h"
 
 class QAbstractButton;
 class QItemSelectionModel;
@@ -86,7 +84,6 @@ public:
      * and make it easy for them to change it.
      */
     void selectProfileName();
-    const Profile::Ptr lookupProfile() const;
 
 public slots:
     // reimplemented
@@ -128,12 +125,10 @@ private slots:
     void showFontDialog();
     void newColorScheme();
     void editColorScheme();
-    void saveColorScheme(const ColorScheme& scheme, bool isNewScheme);
     void removeColorScheme();
     void colorSchemeSelected();
     void previewColorScheme(const QModelIndex& index);
     void fontSelected(const QFont&);
-    void toggleMouseWheelZoom(bool enable);
 
     void colorSchemeAnimationUpdate();
 
@@ -145,9 +140,6 @@ private slots:
     void hideScrollBar();
     void showScrollBarLeft();
     void showScrollBarRight();
-    
-    void scrollFullPage();
-    void scrollHalfPage();
 
     // keyboard page
     void editKeyBinding();
@@ -198,8 +190,7 @@ private:
     void updateKeyBindingsList(bool selectCurrentTranslator = false);
     void updateKeyBindingsButtons();
 
-    void showColorSchemeEditor(bool isNewScheme);
-    void closeColorSchemeEditor();
+    void showColorSchemeEditor(bool newScheme);
     void showKeyBindingEditor(bool newTranslator);
 
     void preview(int property , const QVariant& value);
@@ -239,6 +230,8 @@ private:
     };
     void setupCheckBoxes(BooleanOption* options , const Profile::Ptr profile);
 
+    const Profile::Ptr lookupProfile() const;
+
     Ui::EditProfileDialog* _ui;
     Profile::Ptr _tempProfile;
     Profile::Ptr _profile;
@@ -254,8 +247,6 @@ private:
 
     QHash<int, QVariant> _delayedPreviewProperties;
     QTimer* _delayedPreviewTimer;
-
-    ColorSchemeEditor* _colorDialog;
 };
 
 /**

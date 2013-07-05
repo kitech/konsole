@@ -211,15 +211,12 @@ int ScreenWindow::currentLine() const
     return qBound(0, _currentLine, lineCount() - windowLines());
 }
 
-void ScreenWindow::scrollBy(RelativeScrollMode mode, int amount, bool fullPage)
+void ScreenWindow::scrollBy(RelativeScrollMode mode , int amount)
 {
     if (mode == ScrollLines) {
         scrollTo(currentLine() + amount);
     } else if (mode == ScrollPages) {
-        if (fullPage)
-            scrollTo(currentLine() + amount * (windowLines()));
-        else
-            scrollTo(currentLine() + amount * (windowLines() / 2));
+        scrollTo(currentLine() + amount * (windowLines() / 2));
     }
 }
 

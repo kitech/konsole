@@ -37,7 +37,7 @@ class HistorySizeWidget;
 namespace Konsole
 {
 /**
- * A widget for controlling history related options
+ * A widget for controlling hisotry related options
  */
 class HistorySizeWidget : public QWidget
 {

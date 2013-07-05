@@ -324,7 +324,7 @@ TabbedViewContainer::TabbedViewContainer(NavigationPosition position , QObject* 
     connect(_newTabButton, SIGNAL(clicked()), this, SIGNAL(newViewRequest()));
     connect(_closeTabButton, SIGNAL(clicked()), this, SLOT(closeCurrentTab()));
 
-    // Combine tab bar and 'new/close tab' buttons
+    // Combin tab bar and 'new/close tab' buttons
     _tabBarLayout = new QHBoxLayout;
     _tabBarLayout->setSpacing(0);
     _tabBarLayout->setContentsMargins(0, 0, 0, 0);
@@ -493,7 +493,7 @@ void TabbedViewContainer::startTabDrag(int tab)
             removeView(view);
             break;
         case Qt::IgnoreAction:
-            // The IgnoreAction is used by the tabbar to indicate the
+            // The IgroreAction is used by the tabbar to indicate the
             // special case of dropping one tab into its existing position.
             // So nothing need to do here.
             break;
@@ -502,7 +502,7 @@ void TabbedViewContainer::startTabDrag(int tab)
         }
     } else {
         // if the tab is dragged onto something that does not accept this
-        // drop(for example, a different application or a different konsole
+        // drop(for example, a different application or a differnt konsole
         // process), then detach the tab to achieve the effect of "dragging tab
         // out of current window and into its own window"
         //
