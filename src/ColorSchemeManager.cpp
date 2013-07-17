@@ -311,7 +311,7 @@ bool ColorSchemeManager::deleteColorScheme(const QString& name)
 {
     Q_ASSERT(_colorSchemes.contains(name));
 
-    // lookup the path and delete
+    // look up the path and delete
     QString path = findColorSchemePath(name);
     if (QFile::remove(path)) {
         delete _colorSchemes[name];
@@ -336,9 +336,9 @@ const ColorScheme* ColorSchemeManager::findColorScheme(const QString& name)
         return defaultColorScheme();
     }
 
-    if (_colorSchemes.contains(name))
+    if (_colorSchemes.contains(name)) {
         return _colorSchemes[name];
-    else {
+    } else {
         // look for this color scheme
         QString path = findColorSchemePath(name);
         if (!path.isEmpty() && loadColorScheme(path)) {

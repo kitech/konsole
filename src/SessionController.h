@@ -62,6 +62,7 @@ class IncrementalSearchBar;
 class ProfileList;
 class UrlFilter;
 class RegExpFilter;
+class EditProfileDialog;
 
 // SaveHistoryTask
 class TerminalCharacterDecoder;
@@ -144,6 +145,8 @@ public:
      */
     void setShowMenuAction(QAction* action);
 
+    EditProfileDialog* profileDialogPointer();
+
     // reimplemented
     virtual KUrl url() const;
     virtual QString currentDir() const;
@@ -170,7 +173,7 @@ signals:
     void rawTitleChanged();
 
     /**
-     * Emitted when the curreent working directory of the session associated with
+     * Emitted when the current working directory of the session associated with
      * the controller is changed.
      */
     void currentDirectoryChanged(const QString& dir);
@@ -188,7 +191,7 @@ public slots:
     void openUrl(const KUrl& url);
 
     /**
-     * update actions which are meaningful only when rimary screen is in use.
+     * update actions which are meaningful only when primary screen is in use.
      */
     void setupPrimaryScreenSpecificActions(bool use);
 
@@ -340,6 +343,9 @@ private:
     QStringList _bookmarkValidProgramsToClear;
 
     bool _isSearchBarEnabled;
+    QWeakPointer<EditProfileDialog> _editProfileDialog;
+
+    QString _searchText;
 };
 inline bool SessionController::isValid() const
 {
