@@ -95,6 +95,9 @@ public:
      * is shown on the left or right side of the display.
      */
     void setScrollBarPosition(Enum::ScrollBarPositionEnum position);
+    Enum::ScrollBarPositionEnum scrollBarPosition() const {
+        return _scrollbarLocation;
+    }
 
     /**
      * Sets the current position and range of the display's scroll bar.
@@ -668,6 +671,7 @@ private slots:
     void unmaskBell();
     void swapFGBGColors();
     void tripleClickTimeout();  // resets possibleTripleClick
+    void viewScrolledByUser();
 
     /**
      * Called from the drag-and-drop popup. Causes the dropped URLs to be pasted as text.
@@ -684,6 +688,8 @@ private:
     // drawTextFragment() or drawPrinterFriendlyTextFragment()
     // to draw the fragments
     void drawContents(QPainter& painter, const QRect& rect);
+    // draw a transparent rectangle over the line of the current match
+    void drawCurrentResultRect(QPainter& painter);
     // draws a section of text, all the text in this section
     // has a common color and style
     void drawTextFragment(QPainter& painter, const QRect& rect,
@@ -756,6 +762,9 @@ private:
     void doPaste(QString text, bool appendReturn);
 
     void processMidButtonClick(QMouseEvent* event);
+
+    QPoint findLineStart(const QPoint &pnt);
+    QPoint findLineEnd(const QPoint &pnt);
 
     // the window onto the terminal screen which this display
     // is currently showing.

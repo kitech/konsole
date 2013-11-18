@@ -1,6 +1,5 @@
 /*
     Copyright 2008 by Robert Knight <robertknight@gmail.com>
-    Copyright 2013 by Kurt Hindenburg <kurt.hindenburg@gmail.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,33 +17,43 @@
     02110-1301  USA.
 */
 
-#ifndef SHELLCOMMANDTEST_H
-#define SHELLCOMMANDTEST_H
+#ifndef PARTMANUALTEST_H
+#define PARTMANUALTEST_H
 
-#include "../ShellCommand.h"
+#include <QtCore/QEventLoop>
+
+#include <kde_terminal_interface.h>
+#include <KParts/Part>
+
+class QKeyEvent;
+class QEvent;
 
 namespace Konsole
 {
 
-class ShellCommandTest : public QObject
+class PartManualTest : public QObject
 {
     Q_OBJECT
 
 private slots:
-    void init();
-    void cleanup();
+    void testShortcutOverride();
 
-    void testConstructorWithOneArguemnt();
-    void testConstructorWithTwoArguments();
-    void testExpandEnvironmentVariable();
-    void testValidEnvCharacter();
-    void testValidLeadingEnvCharacter();
-    void testArgumentsWithSpaces();
-    void testEmptyCommand();
+// marked as protected so they are not treated as test cases
+protected slots:
+    void overrideShortcut(QKeyEvent* event, bool& override);
+    void shortcutTriggered();
 
+private:
+    KParts::Part* createPart();
+
+    // variables for testShortcutOverride()
+    bool _shortcutTriggered;
+    bool _overrideCalled;
+    bool _override;
+    QEventLoop* _shortcutEventLoop;
 };
 
 }
 
-#endif // SHELLCOMMANDTEST_H
+#endif // PARTMANUALTEST_H
 

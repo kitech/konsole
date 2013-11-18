@@ -1,5 +1,4 @@
 /*
-    Copyright 2008 by Robert Knight <robertknight@gmail.com>
     Copyright 2013 by Kurt Hindenburg <kurt.hindenburg@gmail.com>
 
     This program is free software; you can redistribute it and/or modify
@@ -18,33 +17,26 @@
     02110-1301  USA.
 */
 
-#ifndef SHELLCOMMANDTEST_H
-#define SHELLCOMMANDTEST_H
+#ifndef SESSIONTEST_H
+#define SESSIONTEST_H
 
-#include "../ShellCommand.h"
+#include <kde_terminal_interface.h>
 
 namespace Konsole
 {
 
-class ShellCommandTest : public QObject
+class SessionTest : public QObject
 {
     Q_OBJECT
 
 private slots:
-    void init();
-    void cleanup();
+    void testNoProfile();
+    void testEmulation();
 
-    void testConstructorWithOneArguemnt();
-    void testConstructorWithTwoArguments();
-    void testExpandEnvironmentVariable();
-    void testValidEnvCharacter();
-    void testValidLeadingEnvCharacter();
-    void testArgumentsWithSpaces();
-    void testEmptyCommand();
-
+private:
 };
 
 }
 
-#endif // SHELLCOMMANDTEST_H
+#endif // SESSIONTEST_H
 

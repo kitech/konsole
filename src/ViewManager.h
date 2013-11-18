@@ -174,6 +174,9 @@ public:
 
     int managerId() const;
 
+    /** Returns a list of sessions in this ViewManager */
+    QList<Session*> sessions() { return _sessionMap.values(); }
+
 signals:
     /** Emitted when the last view is removed from the view manager */
     void empty();
@@ -333,7 +336,7 @@ private slots:
 
     // called when a ViewContainer requests a view be
     // moved
-    void containerMoveViewRequest(int index, int id, bool& success);
+    void containerMoveViewRequest(int index, int id, bool& success, TabbedViewContainer* sourceTabbedContainer);
 
     void detachView(ViewContainer* container, QWidget* view);
 

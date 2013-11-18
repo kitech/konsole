@@ -28,6 +28,7 @@ class QAction;
 class QLabel;
 class QTimer;
 class KLineEdit;
+class QToolButton;
 
 namespace Konsole
 {
@@ -66,7 +67,9 @@ public:
         /** Searches are case-sensitive or not */
         MatchCase        = 1,
         /** Searches use regular expressions */
-        RegExp           = 2
+        RegExp           = 2,
+        /** Search from the bottom and up **/
+        ReverseSearch = 3
     };
 
     /**
@@ -95,6 +98,8 @@ public:
 
     void setSearchText(const QString& text);
 
+    void focusLineEdit();
+
     // reimplemented
     virtual void setVisible(bool visible);
 signals:
@@ -104,6 +109,8 @@ signals:
     void findNextClicked();
     /** Emitted when the user clicks the button to find the previous match */
     void findPreviousClicked();
+    /** The search from beginning/end button */
+    void searchFromClicked();
     /**
      * Emitted when the user toggles the checkbox to indicate whether
      * matches for the search text should be highlighted
@@ -125,21 +132,29 @@ signals:
     void searchReturnPressed(const QString& text);
     /** Emitted when shift+return buttons are pressed in the search box */
     void searchShiftPlusReturnPressed();
+    /** A movement key not handled is forwarded to the terminal display */
+    void unhandledMovementKeyPressed(QKeyEvent *event);
 
 protected:
     virtual bool eventFilter(QObject* watched , QEvent* event);
+    virtual void keyPressEvent(QKeyEvent* event);
 
 public slots:
     void clearLineEdit();
 
 private slots:
     void notifySearchChanged();
+    void updateButtonsAccordingToReverseSearchSetting();
 
 private:
     KLineEdit* _searchEdit;
     QAction* _caseSensitive;
     QAction* _regExpression;
     QAction* _highlightMatches;
+    QAction* _reverseSearch;
+    QToolButton* _findNextButton;
+    QToolButton* _findPreviousButton;
+    QToolButton* _searchFromButton;
 
     QTimer* _searchTimer;
 };

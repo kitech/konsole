@@ -116,6 +116,7 @@ void TerminalDisplay::setScreenWindow(ScreenWindow* window)
     if (_screenWindow) {
         connect(_screenWindow , SIGNAL(outputChanged()) , this , SLOT(updateLineProperties()));
         connect(_screenWindow , SIGNAL(outputChanged()) , this , SLOT(updateImage()));
+        connect(_screenWindow , SIGNAL(currentResultLineChanged()) , this , SLOT(updateImage()));
         _screenWindow->setWindowLines(_lines);
     }
 }
@@ -358,6 +359,8 @@ TerminalDisplay::TerminalDisplay(QWidget* parent)
     _scrollBar->setCursor(Qt::ArrowCursor);
     connect(_scrollBar, SIGNAL(valueChanged(int)),
             this, SLOT(scrollBarPositionChanged(int)));
+    connect(_scrollBar, SIGNAL(sliderMoved(int)),
+            this, SLOT(viewScrolledByUser()));
 
     // setup timers for blinking text
     _blinkTextTimer = new QTimer(this);
@@ -1169,6 +1172,7 @@ void TerminalDisplay::paintEvent(QPaintEvent* pe)
                        true /* use opacity setting */);
         drawContents(paint, rect);
     }
+    drawCurrentResultRect(paint);
     drawInputMethodPreeditString(paint, preeditRect());
     paintFilters(paint);
 }
@@ -1310,7 +1314,9 @@ void TerminalDisplay::paintFilters(QPainter& painter)
                 // drawn on top of them
             } else if (spot->type() == Filter::HotSpot::Marker) {
                 //TODO - Do not use a hardcoded color for this
-                painter.fillRect(r, QBrush(QColor(255, 0, 0, 120)));
+                const bool isCurrentResultLine = (_screenWindow->currentResultLine() == (spot->startLine() + _screenWindow->currentLine()));
+                QColor color = isCurrentResultLine ? QColor(255, 255, 0, 120) : QColor(255, 0, 0, 120);
+                painter.fillRect(r, color);
             }
         }
     }
@@ -1471,6 +1477,17 @@ void TerminalDisplay::drawContents(QPainter& paint, const QRect& rect)
             x += len - 1;
         }
     }
+}
+
+void TerminalDisplay::drawCurrentResultRect(QPainter& painter)
+{
+    if(_screenWindow->currentResultLine() == -1) {
+        return;
+    }
+
+    QRect r(0, (_screenWindow->currentResultLine() - _screenWindow->currentLine())*_fontHeight,
+            contentsRect().width(), _fontHeight);
+    painter.fillRect(r, QColor(0, 0, 255, 80));
 }
 
 QRect TerminalDisplay::imageToWidget(const QRect& imageArea) const
@@ -1895,7 +1912,7 @@ void TerminalDisplay::mousePressEvent(QMouseEvent* ev)
                 emit mouseSignal(0, charColumn + 1, charLine + 1 + _scrollBar->value() - _scrollBar->maximum() , 0);
             }
 
-            if (_underlineLinks && _openLinksByDirectClick) {
+            if (_underlineLinks && (_openLinksByDirectClick || (ev->modifiers() & Qt::ControlModifier))) {
                 Filter::HotSpot* spot = _filterChain->hotSpotAt(charLine, charColumn);
                 if (spot && spot->type() == Filter::HotSpot::Link) {
                     QObject action;
@@ -1964,13 +1981,13 @@ void TerminalDisplay::mouseMoveEvent(QMouseEvent* ev)
                 _mouseOverHotspotArea |= r;
             }
 
-            if (_openLinksByDirectClick && (cursor().shape() != Qt::PointingHandCursor))
+            if ((_openLinksByDirectClick || (ev->modifiers() & Qt::ControlModifier)) && (cursor().shape() != Qt::PointingHandCursor))
                 setCursor(Qt::PointingHandCursor);
 
             update(_mouseOverHotspotArea | previousHotspotArea);
         }
     } else if (!_mouseOverHotspotArea.isEmpty()) {
-        if (_underlineLinks && _openLinksByDirectClick)
+        if (_underlineLinks && (_openLinksByDirectClick || (ev->modifiers() & Qt::ControlModifier)))
             setCursor(_mouseMarks ? Qt::IBeamCursor : Qt::ArrowCursor);
 
         update(_mouseOverHotspotArea);
@@ -2147,30 +2164,16 @@ void TerminalDisplay::extendSelection(const QPoint& position)
     if (_lineSelectionMode) {
         // Extend to complete line
         const bool above_not_below = (here.y() < _iPntSelCorr.y());
-
-        QPoint above = above_not_below ? here : _iPntSelCorr;
-        QPoint below = above_not_below ? _iPntSelCorr : here;
-
-        while (above.y() > 0 && (_lineProperties[above.y() - 1] & LINE_WRAPPED))
-            above.ry()--;
-        while (below.y() < _usedLines - 1 && (_lineProperties[below.y()] & LINE_WRAPPED))
-            below.ry()++;
-
-        above.setX(0);
-        below.setX(_usedColumns - 1);
-
-        // Pick which is start (ohere) and which is extension (here)
         if (above_not_below) {
-            here = above;
-            ohere = below;
+            ohere = findLineEnd(_iPntSelCorr);
+            here = findLineStart(here);
         } else {
-            here = below;
-            ohere = above;
+            ohere = findLineStart(_iPntSelCorr);
+            here = findLineEnd(here);
         }
 
-        const QPoint newSelBegin = QPoint(ohere.x(), ohere.y());
-        swapping = !(_tripleSelBegin == newSelBegin);
-        _tripleSelBegin = newSelBegin;
+        swapping = !(_tripleSelBegin == ohere);
+        _tripleSelBegin = ohere;
 
         ohere.rx()++;
     }
@@ -2458,6 +2461,7 @@ void TerminalDisplay::wheelEvent(QWheelEvent* ev)
         const bool canScroll = _scrollBar->maximum() > 0;
         if (canScroll) {
             _scrollBar->event(ev);
+            _sessionController->setSearchStartToWindowCurrentLine();
         } else {
             // assume that each Up / Down key event will cause the terminal application
             // to scroll by one line.
@@ -2492,6 +2496,72 @@ void TerminalDisplay::wheelEvent(QWheelEvent* ev)
 void TerminalDisplay::tripleClickTimeout()
 {
     _possibleTripleClick = false;
+}
+
+void TerminalDisplay::viewScrolledByUser()
+{
+    _sessionController->setSearchStartToWindowCurrentLine();
+}
+
+/* Moving left/up from the line containing pnt, return the starting 
+   offset point which the given line is continiously wrapped
+   (top left corner = 0,0; previous line not visible = 0,-1).
+*/
+QPoint TerminalDisplay::findLineStart(const QPoint &pnt)
+{
+    const int visibleScreenLines = _lineProperties.size();
+    const int topVisibleLine = _screenWindow->currentLine();
+    Screen *screen = _screenWindow->screen();
+    int line = pnt.y();
+    int lineInHistory= line + topVisibleLine;
+
+    QVector<LineProperty> lineProperties = _lineProperties;
+
+    while (lineInHistory > 0) {
+        for (; line > 0; line--, lineInHistory--) {
+            // Does previous line wrap around?
+            if (!(lineProperties[line - 1] & LINE_WRAPPED)) {
+                return QPoint(0, lineInHistory - topVisibleLine);
+            }
+        }
+
+        if (lineInHistory < 1)
+            break;
+
+        // _lineProperties is only for the visible screen, so grab new data
+        int newRegionStart = qMax(0, lineInHistory - visibleScreenLines);
+        lineProperties = screen->getLineProperties(newRegionStart, lineInHistory - 1);
+        line = lineInHistory - newRegionStart;
+    }
+    return QPoint(0, lineInHistory - topVisibleLine);
+}
+
+/* Moving right/down from the line containing pnt, return the ending 
+   offset point which the given line is continiously wrapped.
+*/
+QPoint TerminalDisplay::findLineEnd(const QPoint &pnt)
+{
+    const int visibleScreenLines = _lineProperties.size();
+    const int topVisibleLine = _screenWindow->currentLine();
+    const int maxY = _screenWindow->lineCount() - 1;
+    Screen *screen = _screenWindow->screen();
+    int line = pnt.y();
+    int lineInHistory= line + topVisibleLine;
+
+    QVector<LineProperty> lineProperties = _lineProperties;
+
+    while (lineInHistory < maxY) {
+        for (; line < lineProperties.count() && lineInHistory < maxY; line++, lineInHistory++) {
+            // Does current line wrap around?
+            if (!(lineProperties[line] & LINE_WRAPPED)) {
+                return QPoint(_columns - 1, lineInHistory - topVisibleLine);
+            }
+        }
+
+        line = 0;
+        lineProperties = screen->getLineProperties(lineInHistory, qMin(lineInHistory + visibleScreenLines, maxY));
+    }
+    return QPoint(_columns - 1, lineInHistory - topVisibleLine);
 }
 
 void TerminalDisplay::mouseTripleClickEvent(QMouseEvent* ev)
@@ -2535,14 +2605,14 @@ void TerminalDisplay::mouseTripleClickEvent(QMouseEvent* ev)
         _screenWindow->setSelectionStart(x , _iPntSel.y() , false);
         _tripleSelBegin = QPoint(x, _iPntSel.y());
     } else if (_tripleClickMode == Enum::SelectWholeLine) {
-        _screenWindow->setSelectionStart(0 , _iPntSel.y() , false);
-        _tripleSelBegin = QPoint(0, _iPntSel.y());
+        // reset _IPntSel  - remove once findWord is implemented
+        _iPntSel = QPoint(charColumn, charLine);
+        _tripleSelBegin = findLineStart(_iPntSel);
+        _screenWindow->setSelectionStart(0 , _tripleSelBegin.y() , false);
     }
 
-    while (_iPntSel.y() < _lines - 1 && (_lineProperties[_iPntSel.y()] & LINE_WRAPPED))
-        _iPntSel.ry()++;
-
-    _screenWindow->setSelectionEnd(_columns - 1 , _iPntSel.y());
+    _iPntSel = findLineEnd(_iPntSel);
+    _screenWindow->setSelectionEnd(_iPntSel.x() , _iPntSel.y());
 
     copyToX11Selection();
 
@@ -2832,6 +2902,7 @@ void TerminalDisplay::scrollScreenWindow(enum ScreenWindow::RelativeScrollMode m
     _screenWindow->setTrackOutput(_screenWindow->atEndOfOutput());
     updateLineProperties();
     updateImage();
+    viewScrolledByUser();
 }
 
 void TerminalDisplay::keyPressEvent(QKeyEvent* event)

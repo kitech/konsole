@@ -27,6 +27,8 @@
 #include <QtCore/QFile>
 #include <QtCore/QTextStream>
 
+#include <KDebug>
+
 using namespace std;
 
 static quint32 charVal(QChar val)
@@ -62,18 +64,21 @@ static quint32 readGlyph(QTextStream& input)
 
 int main(int argc, char **argv)
 {
-    if (argc < 1) {
-        qWarning("usage: fontembedder font.src > font.h");
+    if (argc != 2) {
+        qWarning("usage: fontembedder LineFont.src > LineFont.h");
         exit(1);
     }
     QFile inFile(argv[1]);
     if (!inFile.open(QIODevice::ReadOnly)) {
-        qFatal("Can not open %s", argv[1]);
+        qWarning("Can not open %s", argv[1]);
+        exit(1);
     }
 
     QTextStream input(&inFile);
 
     quint32 glyphStates[128];
+    QMap<quint32, int> glyphMap;
+
     for (int i = 0; i < 128; ++i)
         glyphStates[i] = 0; //nothing..
 
@@ -93,6 +98,13 @@ int main(int argc, char **argv)
         glyph = glyph - 0x2500;
 
         glyphStates[glyph] = readGlyph(input);
+        // kWarning()<<glyph<<";"<<glyphStates[glyph];
+
+        if (glyphMap.contains(glyphStates[glyph])) {
+            kWarning()<<"Code "<<glyph<<" and "<<glyphMap.value(glyphStates[glyph])<<"have the same glyph state"<<glyphStates[glyph];
+        }
+        glyphMap[glyphStates[glyph]] = glyph;
+        
     }
 
     //Output.

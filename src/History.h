@@ -29,6 +29,8 @@
 #include <QtCore/QVector>
 #include <QtCore/QTemporaryFile>
 
+#include "konsole_export.h"
+
 // Konsole
 #include "Character.h"
 
@@ -122,7 +124,7 @@ protected:
 // File-based history (e.g. file log, no limitation in length)
 //////////////////////////////////////////////////////////////////////
 
-class HistoryScrollFile : public HistoryScroll
+class KONSOLEPRIVATE_EXPORT HistoryScrollFile : public HistoryScroll
 {
 public:
     explicit HistoryScrollFile(const QString& logFileName);
@@ -147,7 +149,7 @@ private:
 //////////////////////////////////////////////////////////////////////
 // Nothing-based history (no history :-)
 //////////////////////////////////////////////////////////////////////
-class HistoryScrollNone : public HistoryScroll
+class KONSOLEPRIVATE_EXPORT HistoryScrollNone : public HistoryScroll
 {
 public:
     HistoryScrollNone();
@@ -283,7 +285,7 @@ protected:
     bool _wrapped;
 };
 
-class CompactHistoryScroll : public HistoryScroll
+class KONSOLEPRIVATE_EXPORT CompactHistoryScroll : public HistoryScroll
 {
     typedef QList<CompactHistoryLine*> HistoryArray;
 
@@ -314,7 +316,7 @@ private:
 // History type
 //////////////////////////////////////////////////////////////////////
 
-class HistoryType
+class KONSOLEPRIVATE_EXPORT HistoryType
 {
 public:
     HistoryType();
@@ -331,7 +333,8 @@ public:
      */
     virtual int maximumLineCount() const = 0;
     /**
-     * TODO: document me
+     * Converts from one type of HistoryScroll to another or if given the
+     * same type, returns it.
      */
     virtual HistoryScroll* scroll(HistoryScroll *) const = 0;
     /**
@@ -342,7 +345,7 @@ public:
     }
 };
 
-class HistoryTypeNone : public HistoryType
+class KONSOLEPRIVATE_EXPORT HistoryTypeNone : public HistoryType
 {
 public:
     HistoryTypeNone();
@@ -353,7 +356,7 @@ public:
     virtual HistoryScroll* scroll(HistoryScroll *) const;
 };
 
-class HistoryTypeFile : public HistoryType
+class KONSOLEPRIVATE_EXPORT HistoryTypeFile : public HistoryType
 {
 public:
     explicit HistoryTypeFile(const QString& fileName = QString());
@@ -367,7 +370,7 @@ protected:
     QString _fileName;
 };
 
-class CompactHistoryType : public HistoryType
+class KONSOLEPRIVATE_EXPORT CompactHistoryType : public HistoryType
 {
 public:
     explicit CompactHistoryType(unsigned int size);

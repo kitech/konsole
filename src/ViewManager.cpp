@@ -20,6 +20,8 @@
 // Own
 #include "ViewManager.h"
 
+#include <config-konsole.h>
+
 // Qt
 #include <QtCore/QSignalMapper>
 #include <QtCore/QStringList>
@@ -193,6 +195,7 @@ void ViewManager::setupActions()
 
         multiViewOnlyActions << shrinkActiveAction;
 
+#if defined(ENABLE_DETACHING)
         KAction* detachViewAction = collection->addAction("detach-view");
         detachViewAction->setIcon(KIcon("tab-detach"));
         detachViewAction->setText(i18nc("@action:inmenu", "D&etach Current Tab"));
@@ -202,6 +205,7 @@ void ViewManager::setupActions()
 
         connect(this , SIGNAL(splitViewToggle(bool)) , this , SLOT(updateDetachViewState()));
         connect(detachViewAction , SIGNAL(triggered()) , this , SLOT(detachActiveView()));
+#endif
 
         // Next / Previous View , Next Container
         collection->addAction("next-view", nextViewAction);
@@ -330,6 +334,10 @@ void ViewManager::detachActiveView()
 
 void ViewManager::detachView(ViewContainer* container, QWidget* widgetView)
 {
+#if !defined(ENABLE_DETACHING)
+    return;
+#endif
+
     TerminalDisplay * viewToDetach = qobject_cast<TerminalDisplay*>(widgetView);
 
     if (!viewToDetach)
@@ -600,7 +608,7 @@ ViewContainer* ViewManager::createContainer()
 
     switch (_navigationMethod) {
     case TabbedNavigation: {
-        container = new TabbedViewContainer(_navigationPosition, _viewSplitter);
+        container = new TabbedViewContainer(_navigationPosition, this, _viewSplitter);
 
         connect(container, SIGNAL(detachTab(ViewContainer*,QWidget*)),
                 this, SLOT(detachView(ViewContainer*,QWidget*))
@@ -637,14 +645,15 @@ ViewContainer* ViewManager::createContainer()
 
     connect(container, SIGNAL(newViewRequest()), this, SIGNAL(newViewRequest()));
     connect(container, SIGNAL(newViewRequest(Profile::Ptr)), this, SIGNAL(newViewRequest(Profile::Ptr)));
-    connect(container, SIGNAL(moveViewRequest(int,int,bool&)),
-            this , SLOT(containerMoveViewRequest(int,int,bool&)));
+    connect(container, SIGNAL(moveViewRequest(int,int,bool&,TabbedViewContainer*)),
+            this , SLOT(containerMoveViewRequest(int,int,bool&,TabbedViewContainer*)));
     connect(container , SIGNAL(viewRemoved(QWidget*)) , this , SLOT(viewDestroyed(QWidget*)));
     connect(container , SIGNAL(activeViewChanged(QWidget*)) , this , SLOT(viewActivated(QWidget*)));
 
     return container;
 }
-void ViewManager::containerMoveViewRequest(int index, int id, bool& moved)
+
+void ViewManager::containerMoveViewRequest(int index, int id, bool& moved, TabbedViewContainer* sourceTabbedContainer)
 {
     ViewContainer* container = qobject_cast<ViewContainer*>(sender());
     SessionController* controller = qobject_cast<SessionController*>(ViewProperties::propertiesById(id));
@@ -652,10 +661,27 @@ void ViewManager::containerMoveViewRequest(int index, int id, bool& moved)
     if (!controller)
         return;
 
+    // do not move the last tab in a split view.
+    if (sourceTabbedContainer) {
+        QPointer<ViewContainer> sourceContainer = qobject_cast<ViewContainer*>(sourceTabbedContainer);
+
+        if (_viewSplitter->containers().contains(sourceContainer)) {
+            return;
+        } else {
+            ViewManager* sourceViewManager = sourceTabbedContainer->connectedViewManager();
+
+            // do not remove the last tab on the window
+            if (qobject_cast<ViewSplitter*>(sourceViewManager->widget())->containers().size() > 1) {
+                return;
+            }
+        }
+    }
+
     createView(controller->session(), container, index);
     controller->session()->refresh();
     moved = true;
 }
+
 void ViewManager::setNavigationMethod(NavigationMethod method)
 {
     _navigationMethod = method;
