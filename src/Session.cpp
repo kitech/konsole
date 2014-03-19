@@ -326,6 +326,11 @@ void Session::addView(TerminalDisplay* widget)
 
     widget->setUsesMouse(_emulation->programUsesMouse());
 
+    connect(_emulation, SIGNAL(programBracketedPasteModeChanged(bool)),
+            widget, SLOT(setBracketedPasteMode(bool)));
+
+    widget->setBracketedPasteMode(_emulation->programBracketedPasteMode());
+
     widget->setScreenWindow(_emulation->createWindow());
 
     //connect view signals and slots
@@ -501,6 +506,7 @@ void Session::run()
     int result = _shellProcess->start(exec, arguments, _environment);
     if (result < 0) {
         terminalWarning(i18n("Could not start program '%1' with arguments '%2'.", exec, arguments.join(" ")));
+        terminalWarning(_shellProcess->errorString());
         return;
     }
 
