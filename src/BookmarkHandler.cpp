@@ -1,4 +1,3 @@
-
 /*  This file was part of the KDE libraries
 
     Copyright 2002 Carsten Pfeiffer <pfeiffer@kde.org>
